@@ -40,6 +40,7 @@ export async function createProduct(raw: unknown): Promise<ProductActionState> {
       is_active: v.is_active,
       category: v.category,
       images: v.images,
+      offers: v.offers,
     })
     .select("id")
     .single();
@@ -83,6 +84,7 @@ export async function updateProduct(
       is_active: v.is_active,
       category: v.category,
       images: v.images,
+      offers: v.offers,
     })
     .eq("id", id);
 

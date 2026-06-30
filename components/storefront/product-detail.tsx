@@ -6,6 +6,7 @@ import { CheckoutForm, type FeeInfo } from "@/components/storefront/checkout-for
 import { useLang } from "@/components/storefront/lang-provider";
 import { ProductGallery } from "@/components/storefront/product-gallery";
 import { formatDZD } from "@/lib/money";
+import { normalizeOffers } from "@/lib/offers";
 import type { ProductRow } from "@/types/database.types";
 
 const SERIF = "var(--font-serif), var(--font-arabic-heading), serif";
@@ -21,6 +22,7 @@ export function ProductDetail({
   const isAr = lang === "ar";
   const available = product.stock_quantity - product.reserved_quantity;
   const onSale = product.compare_at_price != null && product.compare_at_price > product.price;
+  const offers = normalizeOffers(product.offers);
 
   const title = isAr ? product.name_ar || product.name_fr : product.name_fr || product.name_ar;
   const subtitle = isAr ? product.name_fr : product.name_ar;
@@ -63,6 +65,20 @@ export function ProductDetail({
             )}
           </div>
 
+          {offers.length > 0 && (
+            <div className="rounded-[16px] border border-[#F4B860]/40 bg-[#F4B860]/10 p-4">
+              <p className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-[#b4773f]">{t.product.promos}</p>
+              <div className="flex flex-wrap gap-2">
+                {offers.map((o) => (
+                  <span key={o.qty} className="inline-flex items-baseline gap-1.5 rounded-full bg-white/70 px-3 py-1 text-sm">
+                    <span className="font-semibold">{o.qty} {t.product.promoUnit}</span>
+                    <span className="font-serif font-semibold">{formatDZD(o.price)}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {description ? (
             <p className="whitespace-pre-line text-[15px] leading-relaxed text-foreground/70" dir={isAr ? "rtl" : "ltr"}>
               {description}
@@ -70,7 +86,7 @@ export function ProductDetail({
           ) : null}
 
           {available > 0 ? (
-            <CheckoutForm productId={product.id} price={product.price} deliveryFees={feeMap} />
+            <CheckoutForm productId={product.id} price={product.price} offers={offers} deliveryFees={feeMap} />
           ) : (
             <div className="rounded-[20px] border border-foreground/10 bg-muted/40 p-5 text-center text-foreground/60">
               {t.product.outOfStockMsg}

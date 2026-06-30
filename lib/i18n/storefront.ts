@@ -57,6 +57,13 @@ export interface StorefrontDict {
     outOfStockMsg: string;
     lowStock: string;
     viewOrder: string;
+    promos: string;
+    promoUnit: string;
+    promoEach: string;
+    promoSave: string;
+    thankTitle: string;
+    thankBody: string;
+    backHome: string;
   };
 }
 
@@ -137,6 +144,13 @@ export const DICT: Record<Lang, StorefrontDict> = {
       outOfStockMsg: "Ce produit est actuellement en rupture de stock.",
       lowStock: "Plus que {n} en stock",
       viewOrder: "Voir ma commande",
+      promos: "Offres spéciales",
+      promoUnit: "pièces",
+      promoEach: "soit {n} / pièce",
+      promoSave: "Économisez {n}",
+      thankTitle: "Merci pour votre commande !",
+      thankBody: "Votre commande a bien été enregistrée. Nous vous appellerons très bientôt pour confirmer la livraison.",
+      backHome: "Continuer mes achats",
     },
   },
   ar: {
@@ -215,6 +229,13 @@ export const DICT: Record<Lang, StorefrontDict> = {
       outOfStockMsg: "هذا المنتج غير متوفّر حاليًا.",
       lowStock: "بقي {n} فقط",
       viewOrder: "عرض طلبي",
+      promos: "عروض خاصة",
+      promoUnit: "قطع",
+      promoEach: "أي {n} / للقطعة",
+      promoSave: "وفّر {n}",
+      thankTitle: "شكرًا على طلبك !",
+      thankBody: "تم تسجيل طلبك بنجاح. سنتصل بك قريبًا جدًا لتأكيد التوصيل.",
+      backHome: "مواصلة التسوّق",
     },
   },
 };

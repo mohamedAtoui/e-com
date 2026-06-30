@@ -43,7 +43,7 @@ export function SettingsForm({ settings }: { settings: SettingsRow | null }) {
           placeholder="123456789012345"
         />
         <p className="text-xs text-muted-foreground">
-          Définissez aussi NEXT_PUBLIC_META_PIXEL_ID pour activer le pixel côté boutique.
+          Le pixel s'active automatiquement sur la boutique dès qu'un ID est enregistré ici.
         </p>
       </div>
       <Button type="submit" disabled={saving}>

@@ -46,11 +46,24 @@ export const productSchema = z
     is_active: z.boolean(),
     category: z.enum(["lampe", "suspension", "applique", "lanterne", "autre"]),
     images: z.array(z.string()).default([]),
+    // Quantity bundle offers ("les promos"): N units for a fixed total price.
+    offers: z
+      .array(
+        z.object({
+          qty: z.coerce.number().int().min(2, "Quantité ≥ 2").max(99),
+          price: z.coerce.number().int().min(0),
+        }),
+      )
+      .default([]),
   })
   .refine(
     (p) => p.compare_at_price == null || p.compare_at_price === 0 || p.compare_at_price > p.price,
     { path: ["compare_at_price"], message: "L'ancien prix doit être supérieur au prix" },
-  );
+  )
+  .refine((p) => new Set(p.offers.map((o) => o.qty)).size === p.offers.length, {
+    path: ["offers"],
+    message: "Quantités d'offres en double",
+  });
 
 export type ProductInput = z.input<typeof productSchema>;
 export type ProductValues = z.output<typeof productSchema>;

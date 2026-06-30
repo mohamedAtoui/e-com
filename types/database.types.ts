@@ -47,6 +47,7 @@ export type ProductRow = Timestamps & {
   is_active: boolean;
   category: ProductCategory;
   images: string[];
+  offers: { qty: number; price: number }[];
 };
 
 export type OrderRow = {
@@ -192,6 +193,10 @@ export type Database = {
       };
       is_admin: { Args: Record<string, never>; Returns: boolean };
       get_order_summary: { Args: { p_event_id: string }; Returns: OrderSummary };
+      get_storefront_settings: {
+        Args: Record<string, never>;
+        Returns: { store_name: string; meta_pixel_id: string | null };
+      };
     };
   };
 };
