@@ -16,11 +16,11 @@ import { useEffect, useRef, useState } from "react";
  * width — all % of the full image.
  */
 const LAMPS = [
-  { name: "sand", hot: { l: 4, t: 56, w: 24, h: 26 }, cx: 22, top: 74, w: 19 },
-  { name: "cream", hot: { l: 21, t: 34, w: 26, h: 26 }, cx: 35, top: 57, w: 23 },
+  { name: "sand", hot: { l: 4, t: 56, w: 24, h: 26 }, cx: 21, top: 75, w: 19 },
+  { name: "cream", hot: { l: 21, t: 34, w: 26, h: 26 }, cx: 35, top: 55, w: 23 },
   { name: "olive", hot: { l: 54, t: 36, w: 24, h: 24 }, cx: 63.5, top: 59, w: 19 },
-  { name: "black", hot: { l: 37, t: 58, w: 28, h: 30 }, cx: 50.5, top: 82, w: 26 },
-  { name: "terracotta", hot: { l: 70, t: 60, w: 24, h: 24 }, cx: 78, top: 78, w: 19 },
+  { name: "black", hot: { l: 37, t: 58, w: 28, h: 30 }, cx: 50, top: 85, w: 26 },
+  { name: "terracotta", hot: { l: 70, t: 60, w: 24, h: 24 }, cx: 79, top: 83, w: 19 },
 ];
 
 const CROP = 24; // % of the image height trimmed off the top (shorter cords)
