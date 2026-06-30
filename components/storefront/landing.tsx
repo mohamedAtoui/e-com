@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { useLang } from "@/components/storefront/lang-provider";
+import { PendantHero } from "@/components/storefront/pendant-hero";
 import { ProductCard } from "@/components/storefront/product-card";
 import type { ProductRow } from "@/types/database.types";
 
@@ -13,20 +14,6 @@ type FeaturedProduct = Pick<
 >;
 
 const SERIF = "var(--font-serif), var(--font-arabic-heading), serif";
-
-function Lamp({ stalk, lampW, lampH, left, glowH, delay, z }: { stalk: string; lampW: string; lampH: string; left: string; glowH: string; delay: string; z: number }) {
-  return (
-    <div aria-hidden className="absolute top-0 flex flex-col items-center" style={{ left, transform: "translateX(-50%)", zIndex: z, animation: `lightyBob ${7 + z * 0.4}s ease-in-out ${delay} infinite` }}>
-      <div style={{ width: 2, height: stalk, background: "linear-gradient(#2B2724,#6b5f54)" }} />
-      <div className="relative flex flex-col items-center">
-        <div className="pointer-events-none absolute left-1/2 top-[94%] -translate-x-1/2 opacity-[var(--lamp,0)] transition-opacity duration-1000" style={{ width: "220%", height: glowH, zIndex: 0, background: "radial-gradient(50% 80% at 50% 0,rgba(244,184,96,.45),rgba(244,184,96,.1) 42%,transparent 72%)" }} />
-        <div className="relative z-[2]" style={{ width: lampW, height: lampH, background: "linear-gradient(118deg,#F6DEAA 4%,#D7A748 40%,#9C6C26 88%)", borderRadius: "50% 50% 16% 16%/64% 64% 18% 18%", boxShadow: "inset -9px -7px 20px rgba(74,46,8,.5),inset 11px 9px 18px rgba(255,242,206,.52),0 24px 40px -18px rgba(43,39,36,.5)" }} />
-        <div className="absolute left-1/2 top-[-5px] z-[3] -translate-x-1/2" style={{ width: "18%", height: 9, background: "linear-gradient(#3a332d,#211d19)", borderRadius: 3 }} />
-        <div className="absolute bottom-[-6px] left-1/2 z-[3] -translate-x-1/2 transition-[box-shadow] duration-1000" style={{ width: "78%", height: "clamp(16px,2vw,24px)", borderRadius: "50%", background: "radial-gradient(62% 100% at 50% 28%,#FFF2D2,#F4B860 52%,rgba(244,184,96,.2))", boxShadow: "0 0 30px 9px rgba(244,184,96,calc(.16 + var(--lamp,0)*.7))" }} />
-      </div>
-    </div>
-  );
-}
 
 function Kicker({ children }: { children: React.ReactNode }) {
   return (
@@ -43,41 +30,30 @@ export function Landing({ products }: { products: FeaturedProduct[] }) {
 
   return (
     <div style={{ fontSize: 17, lineHeight: 1.65 }}>
-      {/* HERO */}
-      <section data-spotlight className="relative mx-auto grid max-w-[1280px] items-center gap-[clamp(32px,5vw,72px)] px-[clamp(18px,5vw,60px)] pb-[clamp(64px,9vh,120px)] pt-[clamp(40px,7vh,96px)]" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,400px),1fr))" }}>
-        <div className="relative z-[3]">
+      {/* HERO — editorial headline above the interactive pendant lamps */}
+      <section className="relative mx-auto flex max-w-[1180px] flex-col items-center overflow-hidden px-[clamp(18px,5vw,60px)] pb-[clamp(32px,5vh,56px)] pt-[clamp(34px,6vh,72px)]">
+        <div className="relative z-[2] flex flex-col items-center text-center">
           <Kicker>{t.hero.kicker}</Kicker>
-          <h1 data-reveal data-delay=".08" className="m-0 font-medium" style={{ fontFamily: SERIF, fontSize: "clamp(50px,8.6vw,124px)", lineHeight: 0.92, letterSpacing: "-.025em" }}>
-            {t.hero.titleA}
-            <br />
+          <h1 data-reveal data-delay=".08" className="m-0 font-medium" style={{ fontFamily: SERIF, fontSize: "clamp(48px,8vw,116px)", lineHeight: 0.92, letterSpacing: "-.03em" }}>
+            {t.hero.titleA}{" "}
             <span style={{ fontStyle: "italic", fontWeight: 400 }}>{t.hero.titleB}</span>
           </h1>
-          <p data-reveal data-delay=".16" className="mt-[30px] max-w-[30em] text-foreground/70" style={{ fontSize: "clamp(17px,1.4vw,19px)", lineHeight: 1.7 }}>
+          <p data-reveal data-delay=".16" className="mx-auto mt-[clamp(18px,2.4vw,28px)] max-w-[32em] text-foreground/70" style={{ fontSize: "clamp(16px,1.4vw,19px)", lineHeight: 1.7 }}>
             {t.hero.lede}
           </p>
-          <div data-reveal data-delay=".24" className="mt-[38px] flex flex-wrap items-center gap-[18px]">
-            <Link href="/collection" className="inline-flex items-center gap-2.5 rounded-full bg-[#2B2724] px-[30px] py-[15px] text-[15.5px] font-semibold text-[#FAF7F2] transition-[transform,box-shadow] duration-500 hover:-translate-y-[3px] hover:shadow-[0_16px_40px_-12px_rgba(244,184,96,.95)]">
-              {t.hero.cta}
-            </Link>
-            <Link href="/#story" className="inline-flex items-center gap-2.5 border-b-[1.5px] border-foreground/25 pb-[3px] text-[15.5px] font-semibold transition-colors hover:border-[#F4B860]">
-              {t.hero.cta2}
-            </Link>
-          </div>
         </div>
 
-        {/* Floating lamps */}
-        <div aria-hidden data-reveal data-delay=".18" data-lamp className="relative z-[1]" style={{ ["--lamp" as string]: 0, height: "clamp(440px,60vh,640px)" }}>
-          <div data-glow className="pointer-events-none absolute left-1/2 top-[30%] -translate-x-1/2 opacity-0 blur-[8px] transition-opacity duration-[1800ms]" style={{ width: "118%", height: "78%", zIndex: 0, background: "radial-gradient(48% 50% at 50% 24%,rgba(244,184,96,.5),rgba(244,184,96,.13) 46%,transparent 72%)" }} />
-          <Lamp stalk="clamp(60px,11vh,112px)" lampW="clamp(52px,6.6vw,76px)" lampH="clamp(58px,7.4vw,86px)" left="19%" glowH="clamp(120px,18vh,200px)" delay="0s" z={2} />
-          <Lamp stalk="clamp(110px,17vh,188px)" lampW="clamp(86px,10.6vw,124px)" lampH="clamp(98px,12vw,142px)" left="48%" glowH="clamp(160px,24vh,280px)" delay=".7s" z={3} />
-          <Lamp stalk="clamp(40px,7vh,82px)" lampW="clamp(60px,7.6vw,88px)" lampH="clamp(68px,8.6vw,100px)" left="78%" glowH="clamp(130px,19vh,210px)" delay="1.4s" z={2} />
+        <div data-reveal data-delay=".22" className="relative z-[1] mt-[clamp(8px,2vh,24px)] w-full">
+          <PendantHero />
         </div>
 
-        <div data-reveal data-delay=".5" className="absolute bottom-[clamp(14px,3vh,30px)] left-1/2 z-[4] flex -translate-x-1/2 flex-col items-center gap-[9px] text-[11px] font-semibold uppercase tracking-[0.24em] text-foreground/40">
-          <span>{t.hero.scrollHint}</span>
-          <span className="relative h-[38px] w-px overflow-hidden" style={{ background: "linear-gradient(rgba(43,39,36,.3),transparent)" }}>
-            <span className="absolute left-0 top-0 h-[12px] w-px" style={{ background: "#F4B860", animation: "lightyScroll 2.1s ease-in-out infinite" }} />
-          </span>
+        <div data-reveal data-delay=".3" className="relative z-[2] -mt-[clamp(8px,3vh,28px)] flex flex-wrap items-center justify-center gap-[16px]">
+          <Link href="/collection" className="inline-flex items-center gap-2.5 rounded-full bg-[#2B2724] px-[32px] py-[16px] text-[15.5px] font-semibold text-[#FAF7F2] transition-[transform,box-shadow] duration-500 hover:-translate-y-[3px] hover:shadow-[0_18px_44px_-12px_rgba(244,184,96,1)]">
+            {t.hero.cta}
+          </Link>
+          <Link href="/#story" className="inline-flex items-center gap-2.5 border-b-[1.5px] border-foreground/25 pb-[3px] text-[15.5px] font-semibold transition-colors hover:border-[#F4B860]">
+            {t.hero.cta2}
+          </Link>
         </div>
       </section>
 
@@ -162,6 +138,7 @@ export function Landing({ products }: { products: FeaturedProduct[] }) {
                 alt={t.amb.title}
                 width={900}
                 height={600}
+                loading="lazy"
                 className="block h-[clamp(380px,52vh,560px)] w-full object-cover transition-[filter] duration-[1800ms]"
                 style={{ filter: "brightness(calc(.74 + var(--lamp,0)*.26)) saturate(calc(.8 + var(--lamp,0)*.25))" }}
               />
