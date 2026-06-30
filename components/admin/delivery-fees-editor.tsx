@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getWilaya } from "@/lib/algeria-data";
+import { getWilaya } from "@/lib/wilayas";
 import type { DeliveryFeeRow } from "@/types/database.types";
 
 export function DeliveryFeesEditor({ fees }: { fees: DeliveryFeeRow[] }) {

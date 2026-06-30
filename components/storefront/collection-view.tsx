@@ -1,21 +1,41 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 import { useLang } from "@/components/storefront/lang-provider";
 import { ProductCard } from "@/components/storefront/product-card";
-import type { ProductRow } from "@/types/database.types";
+import { cn } from "@/lib/utils";
+import type { ProductCategory, ProductRow } from "@/types/database.types";
 
 type GridProduct = Pick<
   ProductRow,
-  "slug" | "name_fr" | "name_ar" | "price" | "compare_at_price" | "images" | "stock_quantity" | "reserved_quantity"
+  "slug" | "name_fr" | "name_ar" | "price" | "compare_at_price" | "images" | "stock_quantity" | "reserved_quantity" | "category"
 >;
 
 const SERIF = "var(--font-serif), var(--font-arabic-heading), serif";
 
+type FilterKey = "all" | ProductCategory;
+
 export function CollectionView({ products }: { products: GridProduct[] }) {
   const { t, dir } = useLang();
-  const n = products.length;
+  const [filter, setFilter] = useState<FilterKey>("all");
+
+  // Only show filters for categories that actually have products.
+  const present = new Set(products.map((p) => p.category));
+  const ALL_FILTERS: { key: FilterKey; label: string }[] = [
+    { key: "all", label: t.colPage.filters.all },
+    { key: "lampe", label: t.colPage.filters.lampe },
+    { key: "suspension", label: t.colPage.filters.suspension },
+    { key: "applique", label: t.colPage.filters.applique },
+    { key: "lanterne", label: t.colPage.filters.lanterne },
+  ];
+  const FILTERS = ALL_FILTERS.filter(
+    (f) => f.key === "all" || present.has(f.key as ProductCategory),
+  );
+
+  const shown = filter === "all" ? products : products.filter((p) => p.category === filter);
+  const n = shown.length;
   const count = `${n} ${n === 1 ? t.colPage.countOne : t.colPage.countMany}`;
 
   return (
@@ -37,12 +57,33 @@ export function CollectionView({ products }: { products: GridProduct[] }) {
       </section>
 
       <section className="mx-auto max-w-[1280px] px-[clamp(18px,5vw,60px)] pb-[clamp(70px,9vh,120px)] pt-[clamp(20px,3vh,36px)]">
-        <div className="mb-6 text-[13.5px] font-medium text-foreground/50">{count}</div>
+        {FILTERS.length > 1 && (
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            {FILTERS.map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className={cn(
+                  "rounded-full px-4 py-2 text-[13.5px] font-semibold transition",
+                  filter === f.key
+                    ? "bg-[#2B2724] text-[#FAF7F2]"
+                    : "bg-foreground/6 text-foreground/65 hover:bg-foreground/10",
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+            <span className="ms-auto text-[13.5px] font-medium text-foreground/50">{count}</span>
+          </div>
+        )}
+        {FILTERS.length <= 1 && (
+          <div className="mb-6 text-[13.5px] font-medium text-foreground/50">{count}</div>
+        )}
         {n === 0 ? (
           <p className="py-16 text-center text-foreground/55">{t.col.empty}</p>
         ) : (
           <div className="grid gap-[clamp(16px,1.8vw,28px)]" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,250px),1fr))" }}>
-            {products.map((p) => (
+            {shown.map((p) => (
               <div data-reveal key={p.slug}>
                 <ProductCard product={p} />
               </div>

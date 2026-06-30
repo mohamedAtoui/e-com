@@ -16,7 +16,7 @@ const SERIF = "var(--font-serif), var(--font-arabic-heading), serif";
 
 function Lamp({ stalk, lampW, lampH, left, glowH, delay, z }: { stalk: string; lampW: string; lampH: string; left: string; glowH: string; delay: string; z: number }) {
   return (
-    <div className="absolute top-0 flex flex-col items-center" style={{ left, transform: "translateX(-50%)", zIndex: z, animation: `lightyBob ${7 + z * 0.4}s ease-in-out ${delay} infinite` }}>
+    <div aria-hidden className="absolute top-0 flex flex-col items-center" style={{ left, transform: "translateX(-50%)", zIndex: z, animation: `lightyBob ${7 + z * 0.4}s ease-in-out ${delay} infinite` }}>
       <div style={{ width: 2, height: stalk, background: "linear-gradient(#2B2724,#6b5f54)" }} />
       <div className="relative flex flex-col items-center">
         <div className="pointer-events-none absolute left-1/2 top-[94%] -translate-x-1/2 opacity-[var(--lamp,0)] transition-opacity duration-1000" style={{ width: "220%", height: glowH, zIndex: 0, background: "radial-gradient(50% 80% at 50% 0,rgba(244,184,96,.45),rgba(244,184,96,.1) 42%,transparent 72%)" }} />
@@ -66,7 +66,7 @@ export function Landing({ products }: { products: FeaturedProduct[] }) {
         </div>
 
         {/* Floating lamps */}
-        <div data-reveal data-delay=".18" data-lamp className="relative z-[1]" style={{ ["--lamp" as string]: 0, height: "clamp(440px,60vh,640px)" }}>
+        <div aria-hidden data-reveal data-delay=".18" data-lamp className="relative z-[1]" style={{ ["--lamp" as string]: 0, height: "clamp(440px,60vh,640px)" }}>
           <div data-glow className="pointer-events-none absolute left-1/2 top-[30%] -translate-x-1/2 opacity-0 blur-[8px] transition-opacity duration-[1800ms]" style={{ width: "118%", height: "78%", zIndex: 0, background: "radial-gradient(48% 50% at 50% 24%,rgba(244,184,96,.5),rgba(244,184,96,.13) 46%,transparent 72%)" }} />
           <Lamp stalk="clamp(60px,11vh,112px)" lampW="clamp(52px,6.6vw,76px)" lampH="clamp(58px,7.4vw,86px)" left="19%" glowH="clamp(120px,18vh,200px)" delay="0s" z={2} />
           <Lamp stalk="clamp(110px,17vh,188px)" lampW="clamp(86px,10.6vw,124px)" lampH="clamp(98px,12vw,142px)" left="48%" glowH="clamp(160px,24vh,280px)" delay=".7s" z={3} />

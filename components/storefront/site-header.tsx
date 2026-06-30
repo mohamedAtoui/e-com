@@ -34,7 +34,8 @@ export function SiteHeader() {
         <div className="flex items-center gap-3">
           <button
             onClick={toggle}
-            className="cursor-pointer rounded-full px-3 py-1.5 text-sm font-semibold tracking-[0.02em] transition-colors hover:bg-foreground/6"
+            aria-label={t.dir === "rtl" ? "Passer au français" : "التبديل إلى العربية"}
+            className="cursor-pointer rounded-full px-3 py-1.5 text-sm font-semibold tracking-[0.02em] transition-colors hover:bg-foreground/6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F4B860]"
           >
             {t.langLabel}
           </button>

@@ -1,15 +1,18 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { type FeeInfo } from "@/components/storefront/checkout-form";
 import { ProductDetail } from "@/components/storefront/product-detail";
 import { ViewContentTracker } from "@/components/storefront/view-content-tracker";
-import { createClient } from "@/lib/supabase/server";
+import { productImageUrl } from "@/lib/images";
+import { createPublicClient } from "@/lib/supabase/public";
 
 export const revalidate = 60;
 
-async function getProduct(slug: string) {
-  const supabase = await createClient();
+// cache() dedupes the fetch shared by generateMetadata + the page render.
+const getProduct = cache(async (slug: string) => {
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from("products")
     .select("*")
@@ -17,7 +20,7 @@ async function getProduct(slug: string) {
     .eq("is_active", true)
     .single();
   return data;
-}
+});
 
 export async function generateMetadata({
   params,
@@ -32,7 +35,7 @@ export async function generateMetadata({
     description: product.description_fr ?? undefined,
     openGraph: {
       title: product.name_fr,
-      images: product.images?.[0] ? [product.images[0]] : undefined,
+      images: product.images?.[0] ? [productImageUrl(product.images[0])] : undefined,
     },
   };
 }
@@ -46,7 +49,7 @@ export default async function ProductPage({
   const product = await getProduct(slug);
   if (!product) notFound();
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data: fees } = await supabase
     .from("delivery_fees")
     .select("wilaya_code, home_fee, stopdesk_fee, home_available, stopdesk_available");

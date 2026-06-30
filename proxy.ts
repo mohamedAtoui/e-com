@@ -55,8 +55,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    // Run on everything except static assets and image optimizer
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  // Only the admin area needs auth/session handling. Public storefront pages
+  // skip the proxy entirely so they stay fast (and ISR-cacheable).
+  matcher: ["/admin/:path*"],
 };

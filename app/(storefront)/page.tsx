@@ -1,10 +1,10 @@
 import { Landing } from "@/components/storefront/landing";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 
 export const revalidate = 60;
 
 export default async function LandingPage() {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data: products } = await supabase
     .from("products")
     .select(

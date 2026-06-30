@@ -22,9 +22,10 @@ export function ProductDetail({
   const available = product.stock_quantity - product.reserved_quantity;
   const onSale = product.compare_at_price != null && product.compare_at_price > product.price;
 
-  const title = isAr ? product.name_ar : product.name_fr;
+  const title = isAr ? product.name_ar || product.name_fr : product.name_fr || product.name_ar;
   const subtitle = isAr ? product.name_fr : product.name_ar;
   const description = isAr ? product.description_ar : product.description_fr;
+  const lowStock = available > 0 && available <= 5;
 
   return (
     <div className="mx-auto max-w-[1280px] px-[clamp(18px,5vw,60px)] py-10">
@@ -55,6 +56,11 @@ export function ProductDetail({
               <span className="h-1.5 w-1.5 rounded-full" style={{ background: available > 0 ? "#7BA05B" : "#b4513f" }} />
               {available > 0 ? t.product.inStock : t.product.outOfStock}
             </span>
+            {lowStock && (
+              <span className="text-[13px] font-medium text-[#b4773f]">
+                {t.product.lowStock.replace("{n}", String(available))}
+              </span>
+            )}
           </div>
 
           {description ? (

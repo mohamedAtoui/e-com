@@ -1,7 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { useLang } from "@/components/storefront/lang-provider";
@@ -9,7 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createOrder } from "@/actions/orders";
-import { WILAYAS, getCommunes } from "@/lib/algeria-data";
+import { communesForWilaya } from "@/actions/geo";
+import { WILAYAS } from "@/lib/wilayas";
+import type { Commune } from "@/lib/algeria-data";
 import { buildEventPayload } from "@/lib/meta/events";
 import { pixel } from "@/lib/meta/pixel";
 import { formatDZD } from "@/lib/money";
@@ -64,7 +67,21 @@ export function CheckoutForm({ productId, price, deliveryFees }: CheckoutFormPro
   const method = watch("delivery_method");
   const quantity = Number(watch("quantity")) || 1;
 
-  const communes = useMemo(() => getCommunes(wilayaCode), [wilayaCode]);
+  const [communes, setCommunes] = useState<Commune[]>([]);
+  useEffect(() => {
+    if (!wilayaCode) {
+      setCommunes([]);
+      return;
+    }
+    let active = true;
+    communesForWilaya(wilayaCode).then((c) => {
+      if (active) setCommunes(c);
+    });
+    return () => {
+      active = false;
+    };
+  }, [wilayaCode]);
+
   const fee = deliveryFees[wilayaCode];
   const deliveryFee =
     fee && method === "home" ? fee.home_fee : fee && method === "stopdesk" ? fee.stopdesk_fee : 0;
@@ -101,6 +118,12 @@ export function CheckoutForm({ productId, price, deliveryFees }: CheckoutFormPro
           {p.orderRef} <span className="font-mono font-medium">#{submitted.order_number}</span>
         </p>
         <p className="mt-2 font-serif text-lg font-semibold">{p.total} : {formatDZD(submitted.total)}</p>
+        <Link
+          href={`/commande/${submitted.meta_event_id}`}
+          className="mt-4 inline-flex items-center rounded-full border border-foreground/20 px-5 py-2 text-sm font-semibold transition hover:border-foreground"
+        >
+          {p.viewOrder}
+        </Link>
       </div>
     );
   }

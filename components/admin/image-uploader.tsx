@@ -41,7 +41,13 @@ export function ImageUploader({
     setUploading(false);
   }
 
-  function remove(path: string) {
+  async function remove(path: string) {
+    const supabase = createClient();
+    const { error } = await supabase.storage.from("product-images").remove([path]);
+    if (error) {
+      toast.error("Échec de la suppression de l'image.");
+      return;
+    }
     onChange(value.filter((p) => p !== path));
   }
 

@@ -44,6 +44,7 @@ export const productSchema = z
     compare_at_price: z.coerce.number().int().min(0).optional().nullable(),
     stock_quantity: z.coerce.number().int().min(0),
     is_active: z.boolean(),
+    category: z.enum(["lampe", "suspension", "applique", "lanterne", "autre"]),
     images: z.array(z.string()).default([]),
   })
   .refine(

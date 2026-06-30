@@ -18,6 +18,12 @@ export type OrderStatus =
   | "returned";
 
 export type DeliveryMethod = "home" | "stopdesk";
+export type ProductCategory =
+  | "lampe"
+  | "suspension"
+  | "applique"
+  | "lanterne"
+  | "autre";
 export type StockMovementType =
   | "reserve"
   | "release"
@@ -39,6 +45,7 @@ export type ProductRow = Timestamps & {
   stock_quantity: number;
   reserved_quantity: number;
   is_active: boolean;
+  category: ProductCategory;
   images: string[];
 };
 
@@ -147,6 +154,19 @@ export type CreateOrderResult = {
   meta_event_id: string;
 };
 
+export type OrderSummary = {
+  order_number: number;
+  status: OrderStatus;
+  subtotal: number;
+  delivery_fee: number;
+  total: number;
+  delivery_method: DeliveryMethod;
+  wilaya_code: number;
+  commune_id: number;
+  created_at: string;
+  items: { name_fr: string | null; name_ar: string | null; quantity: number; unit_price: number }[];
+} | null;
+
 export type Database = {
   public: {
     Tables: {
@@ -171,6 +191,7 @@ export type Database = {
         Returns: undefined;
       };
       is_admin: { Args: Record<string, never>; Returns: boolean };
+      get_order_summary: { Args: { p_event_id: string }; Returns: OrderSummary };
     };
   };
 };

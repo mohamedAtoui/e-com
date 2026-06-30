@@ -38,9 +38,18 @@ export function ProductForm({ initial }: { initial?: ProductRow }) {
       compare_at_price: initial?.compare_at_price ?? undefined,
       stock_quantity: initial?.stock_quantity ?? 0,
       is_active: initial?.is_active ?? true,
+      category: initial?.category ?? "autre",
       images: initial?.images ?? [],
     },
   });
+
+  const CATEGORIES: { value: string; label: string }[] = [
+    { value: "lampe", label: "Lampe" },
+    { value: "suspension", label: "Suspension" },
+    { value: "applique", label: "Applique" },
+    { value: "lanterne", label: "Lanterne" },
+    { value: "autre", label: "Autre" },
+  ];
 
   async function onSubmit(values: ProductInput) {
     const res = editing
@@ -88,10 +97,26 @@ export function ProductForm({ initial }: { initial?: ProductRow }) {
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="slug">Slug (URL)</Label>
-        <Input id="slug" {...register("slug")} placeholder="mon-produit" />
-        {errors.slug && <p className="text-xs text-destructive">{errors.slug.message}</p>}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="slug">Slug (URL)</Label>
+          <Input id="slug" {...register("slug")} placeholder="mon-produit" />
+          {errors.slug && <p className="text-xs text-destructive">{errors.slug.message}</p>}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="category">Catégorie</Label>
+          <select
+            id="category"
+            className="h-9 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40"
+            {...register("category")}
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

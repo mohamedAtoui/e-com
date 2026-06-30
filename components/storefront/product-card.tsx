@@ -26,9 +26,9 @@ export function ProductCard({ product }: { product: CardProduct }) {
   const available = product.stock_quantity - product.reserved_quantity;
   const onSale = product.compare_at_price != null && product.compare_at_price > product.price;
 
-  const title = lang === "ar" ? product.name_ar : product.name_fr;
-  const subtitle = lang === "ar" ? product.name_fr : product.name_ar;
   const isAr = lang === "ar";
+  const title = isAr ? product.name_ar || product.name_fr : product.name_fr || product.name_ar;
+  const subtitle = isAr ? product.name_fr : product.name_ar;
 
   return (
     <Link

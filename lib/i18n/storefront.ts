@@ -28,6 +28,7 @@ export interface StorefrontDict {
     inStock: string;
     countOne: string;
     countMany: string;
+    filters: { all: string; lampe: string; suspension: string; applique: string; lanterne: string };
   };
   product: {
     order: string;
@@ -54,6 +55,8 @@ export interface StorefrontDict {
     inStock: string;
     outOfStock: string;
     outOfStockMsg: string;
+    lowStock: string;
+    viewOrder: string;
   };
 }
 
@@ -105,6 +108,7 @@ export const DICT: Record<Lang, StorefrontDict> = {
       inStock: "En stock",
       countOne: "pièce",
       countMany: "pièces",
+      filters: { all: "Tout", lampe: "Lampes", suspension: "Suspensions", applique: "Appliques", lanterne: "Lanternes" },
     },
     product: {
       order: "Commander",
@@ -131,6 +135,8 @@ export const DICT: Record<Lang, StorefrontDict> = {
       inStock: "En stock",
       outOfStock: "Rupture de stock",
       outOfStockMsg: "Ce produit est actuellement en rupture de stock.",
+      lowStock: "Plus que {n} en stock",
+      viewOrder: "Voir ma commande",
     },
   },
   ar: {
@@ -180,6 +186,7 @@ export const DICT: Record<Lang, StorefrontDict> = {
       inStock: "متوفّر",
       countOne: "قطعة",
       countMany: "قطع",
+      filters: { all: "الكل", lampe: "مصابيح", suspension: "تعليقات", applique: "إضاءات", lanterne: "فوانيس" },
     },
     product: {
       order: "اطلب الآن",
@@ -206,6 +213,8 @@ export const DICT: Record<Lang, StorefrontDict> = {
       inStock: "متوفّر",
       outOfStock: "نفد المخزون",
       outOfStockMsg: "هذا المنتج غير متوفّر حاليًا.",
+      lowStock: "بقي {n} فقط",
+      viewOrder: "عرض طلبي",
     },
   },
 };

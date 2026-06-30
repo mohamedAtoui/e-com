@@ -19,7 +19,7 @@ export function AdminMobileNav() {
   return (
     <div className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur md:hidden">
       <div className="flex items-center justify-between px-4 py-2.5">
-        <span className="text-base font-bold">Ma Boutique</span>
+        <span className="text-base font-bold">Lighty</span>
         <form action={signOut}>
           <button type="submit" className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <LogOut className="size-4" /> Sortir

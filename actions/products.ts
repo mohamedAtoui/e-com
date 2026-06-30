@@ -38,6 +38,7 @@ export async function createProduct(raw: unknown): Promise<ProductActionState> {
       compare_at_price: v.compare_at_price || null,
       stock_quantity: v.stock_quantity,
       is_active: v.is_active,
+      category: v.category,
       images: v.images,
     })
     .select("id")
@@ -80,6 +81,7 @@ export async function updateProduct(
       compare_at_price: v.compare_at_price || null,
       stock_quantity: v.stock_quantity,
       is_active: v.is_active,
+      category: v.category,
       images: v.images,
     })
     .eq("id", id);
@@ -87,9 +89,12 @@ export async function updateProduct(
   if (error) return { ok: false, error: friendlyError(error.message) };
 
   if (delta !== 0) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     await supabase
       .from("stock_movements")
-      .insert({ product_id: id, delta, type: "manual" });
+      .insert({ product_id: id, delta, type: "manual", created_by: user?.id ?? null });
   }
 
   revalidatePath("/admin/products");
@@ -100,8 +105,23 @@ export async function updateProduct(
 
 export async function deleteProduct(id: string): Promise<ProductActionState> {
   const supabase = await createClient();
+
+  // Fetch image paths so we can clean up Storage after the row is deleted.
+  const { data: product } = await supabase
+    .from("products")
+    .select("images")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) return { ok: false, error: friendlyError(error.message) };
+
+  // Remove orphaned image files (best-effort; row deletion already succeeded).
+  const images = product?.images ?? [];
+  if (images.length > 0) {
+    await supabase.storage.from("product-images").remove(images);
+  }
+
   revalidatePath("/admin/products");
   revalidatePath("/");
   return { ok: true };

@@ -55,10 +55,11 @@ export async function createOrder(
   });
 
   if (error) {
-    const key = error.message.match(/[a-z_]+/)?.[0] ?? "";
+    console.error("[create_order]", error.code, error.message);
+    const matched = Object.keys(ERROR_MESSAGES).find((k) => error.message.includes(k));
     return {
       ok: false,
-      error: ERROR_MESSAGES[key] ?? "Une erreur est survenue. Réessayez.",
+      error: matched ? ERROR_MESSAGES[matched] : "Une erreur est survenue. Réessayez.",
     };
   }
 
@@ -71,7 +72,7 @@ export async function createOrder(
     phone: v.customer_phone,
     name: v.customer_name,
     items: [{ product_id: productId, quantity: v.quantity, unit_price: result.subtotal / v.quantity }],
-  }).catch(() => {});
+  }).catch((e) => console.error("[CAPI Lead]", e));
 
   return { ok: true, result };
 }
@@ -108,7 +109,7 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
         phone: order.customer_phone,
         name: order.customer_name,
         items: order.order_items ?? [],
-      }).catch(() => {});
+      }).catch((e) => console.error("[CAPI Purchase]", e));
     }
   }
 
