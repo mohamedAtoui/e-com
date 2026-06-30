@@ -87,6 +87,16 @@ export function CheckoutForm({ productId, price, offers = [], deliveryFees }: Ch
     fee && method === "home" ? fee.home_fee : fee && method === "stopdesk" ? fee.stopdesk_fee : 0;
   const { subtotal, unitPrice, offer } = computeLine(price, offers, quantity);
   const total = subtotal + deliveryFee;
+  // Regular (non-promo) subtotal, and how much the active promo saves.
+  const regularSubtotal = price * quantity;
+  const saved = Math.max(0, regularSubtotal - subtotal);
+  // Best-value tier = lowest price-per-unit; used to badge the top deal.
+  const bestQty = offers.length
+    ? offers.reduce((b, o) => (o.price / o.qty < b.price / b.qty ? o : b)).qty
+    : 0;
+
+  const setQty = (n: number) =>
+    setValue("quantity", Math.min(99, Math.max(1, n)), { shouldValidate: true });
 
   function trackCheckout() {
     if (checkoutTracked.current) return;
@@ -162,34 +172,29 @@ export function CheckoutForm({ productId, price, offers = [], deliveryFees }: Ch
       </div>
 
       {offers.length > 0 && (
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <Label>{p.promos}</Label>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <PackCard
+              selected={!offer}
+              onClick={() => setQty(1)}
+              qtyLabel={`1 ${p.promoUnit}`}
+              price={formatDZD(price)}
+            />
             {offers.map((o) => {
-              const selected = quantity === o.qty;
               const each = Math.round(o.price / o.qty);
               const save = price * o.qty - o.price;
               return (
-                <button
+                <PackCard
                   key={o.qty}
-                  type="button"
-                  onClick={() => setValue("quantity", o.qty, { shouldValidate: true })}
-                  className={cn(
-                    "flex flex-col rounded-xl border p-3 text-start transition",
-                    selected ? "border-[#2B2724] bg-[#F4B860]/10 ring-1 ring-[#F4B860]" : "border-input hover:border-foreground/30",
-                  )}
-                >
-                  <span className="text-sm font-semibold">
-                    {o.qty} {p.promoUnit}
-                  </span>
-                  <span className="font-serif text-base font-semibold">{formatDZD(o.price)}</span>
-                  <span className="text-[11px] text-foreground/55">{p.promoEach.replace("{n}", formatDZD(each))}</span>
-                  {save > 0 && (
-                    <span className="mt-0.5 text-[11px] font-semibold text-[#7BA05B]">
-                      {p.promoSave.replace("{n}", formatDZD(save))}
-                    </span>
-                  )}
-                </button>
+                  selected={quantity === o.qty}
+                  onClick={() => setQty(o.qty)}
+                  qtyLabel={`${o.qty} ${p.promoUnit}`}
+                  price={formatDZD(o.price)}
+                  each={p.promoEach.replace("{n}", formatDZD(each))}
+                  save={save > 0 ? p.promoSave.replace("{n}", formatDZD(save)) : undefined}
+                  best={o.qty === bestQty ? p.promoBest : undefined}
+                />
               );
             })}
           </div>
@@ -198,11 +203,50 @@ export function CheckoutForm({ productId, price, offers = [], deliveryFees }: Ch
 
       <div className="space-y-1.5">
         <Label htmlFor="quantity">{p.quantity}</Label>
-        <Input id="quantity" type="number" min={1} max={99} className="h-11 w-24 rounded-xl" {...register("quantity")} />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="-"
+            onClick={() => setQty(quantity - 1)}
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-input text-lg transition hover:border-foreground/40 disabled:opacity-40"
+            disabled={quantity <= 1}
+          >
+            −
+          </button>
+          <Input
+            id="quantity"
+            type="number"
+            min={1}
+            max={99}
+            className="h-11 w-16 rounded-xl text-center"
+            {...register("quantity")}
+          />
+          <button
+            type="button"
+            aria-label="+"
+            onClick={() => setQty(quantity + 1)}
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-input text-lg transition hover:border-foreground/40 disabled:opacity-40"
+            disabled={quantity >= 99}
+          >
+            +
+          </button>
+        </div>
       </div>
 
       <dl className="space-y-1 border-t border-foreground/10 pt-3 text-sm">
-        <Row label={offer ? `${p.subtotal} · ${p.promos}` : p.subtotal} value={formatDZD(subtotal)} />
+        <div className="flex justify-between">
+          <dt className="text-foreground/60">{p.subtotal}</dt>
+          <dd className="flex items-center gap-2">
+            {saved > 0 && <span className="text-foreground/40 line-through">{formatDZD(regularSubtotal)}</span>}
+            <span>{formatDZD(subtotal)}</span>
+          </dd>
+        </div>
+        {saved > 0 && (
+          <div className="flex justify-between text-[#7BA05B]">
+            <dt className="font-medium">{p.promos}</dt>
+            <dd className="font-semibold">− {formatDZD(saved)}</dd>
+          </div>
+        )}
         <Row label={p.delivery} value={wilayaCode ? formatDZD(deliveryFee) : "—"} />
         <Row label={p.total} value={formatDZD(total)} strong />
       </dl>
@@ -213,6 +257,47 @@ export function CheckoutForm({ productId, price, offers = [], deliveryFees }: Ch
         {isSubmitting ? p.submitting : p.submit}
       </Button>
     </form>
+  );
+}
+
+function PackCard({
+  selected,
+  onClick,
+  qtyLabel,
+  price,
+  each,
+  save,
+  best,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  qtyLabel: string;
+  price: string;
+  each?: string;
+  save?: string;
+  best?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "relative flex flex-col rounded-xl border p-3 text-start transition",
+        selected
+          ? "border-[#2B2724] bg-[#F4B860]/10 ring-1 ring-[#F4B860]"
+          : "border-input hover:border-foreground/30",
+      )}
+    >
+      {best && (
+        <span className="absolute -top-2 right-2 rounded-full bg-[#2B2724] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[#F4B860]">
+          {best}
+        </span>
+      )}
+      <span className="text-sm font-semibold">{qtyLabel}</span>
+      <span className="font-serif text-base font-semibold">{price}</span>
+      {each && <span className="text-[11px] text-foreground/55">{each}</span>}
+      {save && <span className="mt-0.5 text-[11px] font-semibold text-[#7BA05B]">{save}</span>}
+    </button>
   );
 }
 

@@ -61,6 +61,7 @@ export interface StorefrontDict {
     promoUnit: string;
     promoEach: string;
     promoSave: string;
+    promoBest: string;
     thankTitle: string;
     thankBody: string;
     backHome: string;
@@ -148,6 +149,7 @@ export const DICT: Record<Lang, StorefrontDict> = {
       promoUnit: "pièces",
       promoEach: "soit {n} / pièce",
       promoSave: "Économisez {n}",
+      promoBest: "Meilleure offre",
       thankTitle: "Merci pour votre commande !",
       thankBody: "Votre commande a bien été enregistrée. Nous vous appellerons très bientôt pour confirmer la livraison.",
       backHome: "Continuer mes achats",
@@ -233,6 +235,7 @@ export const DICT: Record<Lang, StorefrontDict> = {
       promoUnit: "قطع",
       promoEach: "أي {n} / للقطعة",
       promoSave: "وفّر {n}",
+      promoBest: "أفضل عرض",
       thankTitle: "شكرًا على طلبك !",
       thankBody: "تم تسجيل طلبك بنجاح. سنتصل بك قريبًا جدًا لتأكيد التوصيل.",
       backHome: "مواصلة التسوّق",
