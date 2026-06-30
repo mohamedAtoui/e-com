@@ -18,9 +18,9 @@ export function SiteHeader() {
         <span>{t.trustStrip}</span>
       </div>
 
-      <header className="sticky top-0 z-[60] flex flex-wrap items-center justify-between gap-5 px-[clamp(18px,5vw,60px)] py-4 backdrop-blur-md" style={{ background: "rgba(250,247,242,.72)" }}>
+      <header className="sticky top-0 z-[60] flex items-center justify-between gap-4 px-[clamp(18px,5vw,60px)] py-3.5 backdrop-blur-md" style={{ background: "rgba(250,247,242,.72)" }}>
         <LightyLogo />
-        <nav className="flex flex-wrap items-center gap-[clamp(16px,2.4vw,34px)] text-[14.5px] font-medium">
+        <nav className="hidden items-center gap-[clamp(16px,2.4vw,34px)] text-[14.5px] font-medium md:flex">
           <Link href="/collection" className="text-foreground/72 transition-colors hover:text-foreground">
             {t.nav.collections}
           </Link>

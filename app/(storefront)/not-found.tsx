@@ -12,7 +12,9 @@ export default function NotFound() {
       <p className="font-arabic text-muted-foreground" dir="rtl" lang="ar">
         هذا المنتج غير موجود أو لم يعد متوفراً
       </p>
-      <Button render={<Link href="/" />}>Retour à la boutique</Button>
+      <Button render={<Link href="/" />} nativeButton={false}>
+        Retour à la boutique
+      </Button>
     </div>
   );
 }

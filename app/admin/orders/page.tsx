@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { OrderStatusControl } from "@/components/admin/order-status-control";
 import { StatusBadge } from "@/components/admin/status-badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -186,14 +186,15 @@ function FilterPill({
   active: boolean;
 }) {
   return (
-    <Button
-      render={<Link href={href} />}
-      variant={active ? "default" : "outline"}
-      size="sm"
-      className={cn(!active && "text-muted-foreground")}
+    <Link
+      href={href}
+      className={cn(
+        buttonVariants({ variant: active ? "default" : "outline", size: "sm" }),
+        !active && "text-muted-foreground",
+      )}
     >
       {label}
       <span className="ms-1.5 rounded bg-background/20 px-1.5 text-xs">{count}</span>
-    </Button>
+    </Link>
   );
 }

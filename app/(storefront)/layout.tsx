@@ -23,7 +23,7 @@ export default function StorefrontLayout({
       />
       <SiteHeader />
       <MotionProvider>
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 overflow-x-hidden">{children}</main>
       </MotionProvider>
       <SiteFooter />
     </LangProvider>

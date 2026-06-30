@@ -30,7 +30,7 @@ export default async function ProductsPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Produits</h1>
-        <Button render={<Link href="/admin/products/new" />}>
+        <Button render={<Link href="/admin/products/new" />} nativeButton={false}>
           <Plus className="size-4" /> Nouveau produit
         </Button>
       </div>
@@ -40,7 +40,7 @@ export default async function ProductsPage() {
           Aucun produit. Créez votre premier produit.
         </p>
       ) : (
-        <div className="rounded-xl border">
+        <div className="overflow-x-auto rounded-xl border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -98,6 +98,7 @@ export default async function ProductsPage() {
                       <div className="flex justify-end gap-1">
                         <Button
                           render={<Link href={`/admin/products/${p.id}/edit`} />}
+                          nativeButton={false}
                           variant="ghost"
                           size="icon"
                           aria-label="Modifier"

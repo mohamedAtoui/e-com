@@ -1,3 +1,4 @@
+import { AdminMobileNav } from "@/components/admin/admin-mobile-nav";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,7 +24,10 @@ export default async function AdminLayout({
           {user.email}
         </p>
       </aside>
-      <main className="flex-1 overflow-x-hidden bg-background">{children}</main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <AdminMobileNav />
+        <main className="flex-1 overflow-x-hidden bg-background">{children}</main>
+      </div>
     </div>
   );
 }
