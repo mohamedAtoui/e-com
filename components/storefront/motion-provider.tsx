@@ -30,36 +30,47 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // ----- Cursor spotlight (hero) -----
+    // ----- Cursor spotlight (hero) — GPU transform, no per-frame repaint -----
+    // Pointer-only (never runs on touch). The glow is a fixed-size radial that
+    // we move with translate3d; the rAF loop only runs while the pointer moves.
     root.querySelectorAll<HTMLElement>("[data-spotlight]").forEach((hero) => {
+      if (reduce) return;
+      const SIZE = 620;
       const glow = document.createElement("div");
       glow.setAttribute("aria-hidden", "true");
       glow.style.cssText = [
-        "position:absolute", "inset:-10%", "pointer-events:none", "z-index:2",
-        "opacity:0", "transition:opacity .6s ease", "mix-blend-mode:screen",
-        "background:radial-gradient(280px circle at 50% 50%, rgba(244,184,96,.55), rgba(244,184,96,.16) 38%, transparent 66%)",
+        "position:absolute", "top:0", "left:0",
+        `width:${SIZE}px`, `height:${SIZE}px`,
+        `margin:${-SIZE / 2}px 0 0 ${-SIZE / 2}px`,
+        "pointer-events:none", "z-index:2", "opacity:0",
+        "transition:opacity .5s ease", "mix-blend-mode:screen", "will-change:transform",
+        "background:radial-gradient(circle at center, rgba(244,184,96,.5), rgba(244,184,96,.14) 40%, transparent 68%)",
       ].join(";");
       hero.appendChild(glow);
       cleanupFns.push(() => glow.remove());
-      if (reduce) return;
-      let tx = 0.5, ty = 0.5, cx = 0.5, cy = 0.5, inside = false, raf = 0;
-      const onMove = (e: PointerEvent) => {
-        const r = hero.getBoundingClientRect();
-        tx = (e.clientX - r.left) / r.width;
-        ty = (e.clientY - r.top) / r.height;
-        if (!inside) { inside = true; glow.style.opacity = "1"; }
-      };
-      const onLeave = () => { inside = false; glow.style.opacity = "0"; };
+
+      let tx = 0, ty = 0, cx = 0, cy = 0, running = false, raf = 0;
       const loop = () => {
-        cx += (tx - cx) * 0.12; cy += (ty - cy) * 0.12;
-        glow.style.background =
-          "radial-gradient(300px circle at " + (cx * 100).toFixed(2) + "% " + (cy * 100).toFixed(2) +
-          "%, rgba(244,184,96,.55), rgba(244,184,96,.16) 38%, transparent 66%)";
-        raf = requestAnimationFrame(loop);
+        cx += (tx - cx) * 0.15;
+        cy += (ty - cy) * 0.15;
+        glow.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
+        if (Math.abs(tx - cx) > 0.4 || Math.abs(ty - cy) > 0.4) {
+          raf = requestAnimationFrame(loop);
+        } else {
+          running = false;
+        }
       };
-      hero.addEventListener("pointermove", onMove);
+      const onMove = (e: PointerEvent) => {
+        if (e.pointerType === "touch") return;
+        const r = hero.getBoundingClientRect();
+        tx = e.clientX - r.left;
+        ty = e.clientY - r.top;
+        if (glow.style.opacity !== "1") glow.style.opacity = "1";
+        if (!running) { running = true; raf = requestAnimationFrame(loop); }
+      };
+      const onLeave = () => { glow.style.opacity = "0"; };
+      hero.addEventListener("pointermove", onMove, { passive: true });
       hero.addEventListener("pointerleave", onLeave);
-      raf = requestAnimationFrame(loop);
       cleanupFns.push(() => {
         hero.removeEventListener("pointermove", onMove);
         hero.removeEventListener("pointerleave", onLeave);
@@ -90,7 +101,11 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
     });
 
     const revealAll = () => {
-      reveals.forEach((el) => { el.style.opacity = "1"; el.style.transform = "none"; });
+      reveals.forEach((el) => {
+        el.style.opacity = "1";
+        el.style.transform = "none";
+        el.style.willChange = "auto";
+      });
       lamps.forEach(lampOn);
     };
 
@@ -106,14 +121,22 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
         gsap.registerPlugin(ST);
 
         const Lenis = lenisMod.default;
-        lenis = new Lenis({ duration: 1.15, smoothWheel: true, wheelMultiplier: 0.9, lerp: 0.1 }) as unknown as typeof lenis;
+        // lerp-based (frame-rate independent) + 1:1 wheel so it feels responsive,
+        // not heavy/laggy. smoothWheel only — touch stays native (smoothest on mobile).
+        lenis = new Lenis({ lerp: 0.1, wheelMultiplier: 1, smoothWheel: true }) as unknown as typeof lenis;
         lenis!.on("scroll", ST.update);
         const raf = (t: number) => { lenis!.raf(t); rafId = requestAnimationFrame(raf); };
         rafId = requestAnimationFrame(raf);
 
         const vh = () => window.innerHeight || document.documentElement.clientHeight;
+        // Reveal, then drop will-change so we don't keep hundreds of permanent
+        // compositor layers (a common scroll-jank source).
         const showReveal = (el: HTMLElement, delay: number) =>
-          window.setTimeout(() => { el.style.opacity = "1"; el.style.transform = "none"; }, delay * 1000);
+          window.setTimeout(() => {
+            el.style.opacity = "1";
+            el.style.transform = "none";
+            window.setTimeout(() => { el.style.willChange = "auto"; }, 1300);
+          }, delay * 1000);
 
         reveals.forEach((el) => {
           const delay = parseFloat(el.getAttribute("data-delay") || "0");

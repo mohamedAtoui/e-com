@@ -15,10 +15,11 @@ export default function StorefrontLayout({
   return (
     <LangProvider>
       <MetaPixel pixelId={process.env.NEXT_PUBLIC_META_PIXEL_ID} />
-      {/* Film grain overlay */}
+      {/* Film grain overlay — no mix-blend (that forces a full-viewport
+          recomposite every scroll frame = jank); plain low opacity is enough. */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 z-[80] opacity-[0.035] mix-blend-multiply"
+        className="pointer-events-none fixed inset-0 z-[80] opacity-[0.04]"
         style={{ backgroundImage: GRAIN }}
       />
       <SiteHeader />
