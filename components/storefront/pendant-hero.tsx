@@ -16,11 +16,11 @@ import { useEffect, useRef, useState } from "react";
  * width — all % of the full image.
  */
 const LAMPS = [
-  { name: "sand", hot: { l: 4, t: 56, w: 24, h: 26 }, cx: 17.5, top: 80, w: 19 },
+  { name: "sand", hot: { l: 4, t: 56, w: 24, h: 26 }, cx: 22, top: 80, w: 19 },
   { name: "cream", hot: { l: 21, t: 34, w: 26, h: 26 }, cx: 35, top: 63, w: 23 },
   { name: "olive", hot: { l: 54, t: 36, w: 24, h: 24 }, cx: 63.5, top: 65, w: 19 },
   { name: "black", hot: { l: 37, t: 58, w: 28, h: 30 }, cx: 50.5, top: 88, w: 26 },
-  { name: "terracotta", hot: { l: 70, t: 60, w: 24, h: 24 }, cx: 80.5, top: 84, w: 19 },
+  { name: "terracotta", hot: { l: 70, t: 60, w: 24, h: 24 }, cx: 78, top: 84, w: 19 },
 ];
 
 const CROP = 24; // % of the image height trimmed off the top (shorter cords)
@@ -75,7 +75,7 @@ export function PendantHero() {
               height: `${98 - lamp.top}%`,
               opacity: active === i ? 1 : 0,
               background:
-                "linear-gradient(180deg, rgba(255,240,205,.75), rgba(244,184,96,.28) 45%, rgba(244,184,96,0) 100%)",
+                "radial-gradient(120% 100% at 50% 0%, rgba(255,245,214,.95), rgba(244,184,96,.42) 32%, rgba(244,184,96,.12) 60%, rgba(244,184,96,0) 82%)",
               clipPath: "polygon(40% 0, 60% 0, 100% 100%, 0 100%)",
               filter: "blur(7px)",
               zIndex: 1,
