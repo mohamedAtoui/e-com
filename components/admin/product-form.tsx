@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { createProduct, updateProduct } from "@/actions/products";
@@ -40,7 +40,13 @@ export function ProductForm({ initial }: { initial?: ProductRow }) {
       is_active: initial?.is_active ?? true,
       category: initial?.category ?? "autre",
       images: initial?.images ?? [],
+      offers: initial?.offers ?? [],
     },
+  });
+
+  const { fields: offerFields, append: appendOffer, remove: removeOffer } = useFieldArray({
+    control,
+    name: "offers",
   });
 
   const CATEGORIES: { value: string; label: string }[] = [
@@ -150,6 +156,56 @@ export function ProductForm({ initial }: { initial?: ProductRow }) {
             <p className="text-xs text-destructive">{errors.stock_quantity.message}</p>
           )}
         </div>
+      </div>
+
+      <div className="space-y-3 rounded-lg border p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <Label>Offres / Promos</Label>
+            <p className="text-xs text-muted-foreground">
+              Prix total par quantité. Ex : 2 pièces = 3500 DA, 3 pièces = 5000 DA.
+            </p>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={() => appendOffer({ qty: 2, price: 0 })}>
+            + Ajouter une offre
+          </Button>
+        </div>
+
+        {offerFields.length === 0 && (
+          <p className="text-xs text-muted-foreground">Aucune offre. Le prix unitaire s'applique.</p>
+        )}
+
+        {offerFields.map((field, i) => (
+          <div key={field.id} className="flex items-end gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor={`offers.${i}.qty`} className="text-xs">Quantité</Label>
+              <Input
+                id={`offers.${i}.qty`}
+                type="number"
+                min={2}
+                max={99}
+                className="w-24"
+                {...register(`offers.${i}.qty` as const)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`offers.${i}.price`} className="text-xs">Prix total (DA)</Label>
+              <Input
+                id={`offers.${i}.price`}
+                type="number"
+                min={0}
+                className="w-36"
+                {...register(`offers.${i}.price` as const)}
+              />
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={() => removeOffer(i)}>
+              Supprimer
+            </Button>
+          </div>
+        ))}
+        {errors.offers && typeof errors.offers.message === "string" && (
+          <p className="text-xs text-destructive">{errors.offers.message}</p>
+        )}
       </div>
 
       <div className="flex items-center gap-3 rounded-lg border p-4">

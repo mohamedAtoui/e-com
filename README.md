@@ -6,10 +6,12 @@ Built with **Next.js 16 (App Router)**, **Supabase** (Postgres, Auth, Storage),
 
 - **Storefront** (`/`, `/products/[slug]`): clean landing grid + bilingual
   (Arabic + French) product pages with a COD order form — Nom, Téléphone,
-  Wilaya → Commune, mode de livraison, quantité. No online payment.
+  Wilaya → Commune, mode de livraison, quantité. No online payment. Quantity
+  **bundle offers** ("les promos", e.g. 2 pièces = 3500 DA) apply automatically,
+  and a successful order redirects to a **thank-you page** (`/commande/[token]`).
 - **Admin** (`/admin/*`, Supabase-Auth protected): orders grouped by product,
-  COD-aware stock, product CRUD with image upload, per-wilaya delivery fees,
-  Meta Pixel settings.
+  COD-aware stock, product CRUD with image upload + per-product bundle offers,
+  per-wilaya delivery fees, Meta Pixel settings.
 
 ## Tech & key decisions
 
@@ -39,7 +41,7 @@ components/admin/         OrdersTable bits, ProductForm, ImageUploader, fee edit
 lib/supabase/             client.ts (anon) · server.ts (cookies) · admin.ts (service role)
 lib/meta/                 pixel.ts (client) · capi.ts (server) · events.ts
 lib/algeria-data.ts       bundled wilaya/commune data
-supabase/migrations/      0001_init.sql (schema+RLS+RPCs) · 0002_storage.sql
+supabase/migrations/      0001_init · 0002_storage · 0003_hardening · 0004_offers_and_pixel
 supabase/seed_geo.sql     wilayas + communes + placeholder delivery fees
 proxy.ts                  session refresh + /admin/* auth guard
 ```
@@ -60,7 +62,7 @@ Fill in:
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...           # server-only
-NEXT_PUBLIC_META_PIXEL_ID=              # optional
+NEXT_PUBLIC_META_PIXEL_ID=              # optional fallback (admin Settings wins)
 META_CAPI_ACCESS_TOKEN=                 # optional (Events Manager → System User token)
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
@@ -69,7 +71,9 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 Run these in the **Supabase SQL Editor** (or via the CLI, below), in order:
 1. `supabase/migrations/0001_init.sql` — tables, RLS, RPCs
 2. `supabase/migrations/0002_storage.sql` — `product-images` bucket + policies
-3. `supabase/seed_geo.sql` — 69 wilayas, 1541 communes, placeholder fees
+3. `supabase/migrations/0003_hardening.sql` — integrity, stale-order cleanup, category
+4. `supabase/migrations/0004_offers_and_pixel.sql` — product bundle offers + public Pixel settings
+5. `supabase/seed_geo.sql` — 69 wilayas, 1541 communes, placeholder fees
 
 With the Supabase CLI instead:
 ```bash
@@ -99,9 +103,13 @@ npm run dev      # http://localhost:3000
 - **Stock flow**: a new order reserves stock (status `pending`). Confirming it
   decrements physical stock; cancelling/returning restocks. Enforced atomically
   in `update_order_status` — illegal transitions are rejected.
-- **Meta**: set `NEXT_PUBLIC_META_PIXEL_ID` to enable the client Pixel; add
-  `META_CAPI_ACCESS_TOKEN` for server-side CAPI. Validate with Events Manager →
-  Test Events (`META_TEST_EVENT_CODE`).
+- **Meta**: set the Pixel ID in **/admin/settings** (the storefront reads it via
+  the public `get_storefront_settings` RPC) — `NEXT_PUBLIC_META_PIXEL_ID` is only
+  a fallback. Add `META_CAPI_ACCESS_TOKEN` for server-side CAPI. Validate with
+  Events Manager → Test Events (`META_TEST_EVENT_CODE`).
+- **Bundle offers**: set per-product promos ("N pièces = X DA") in the product
+  editor. The matching tier is applied automatically at checkout and recomputed
+  server-side in `create_order` (never trust the client total).
 - The public order endpoint is rate-limited best-effort per IP
   ([`lib/rate-limit.ts`](lib/rate-limit.ts)); for multi-instance hosting back it
   with Redis/Upstash.

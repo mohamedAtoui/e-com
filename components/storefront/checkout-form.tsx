@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -16,9 +16,9 @@ import type { Commune } from "@/lib/algeria-data";
 import { buildEventPayload } from "@/lib/meta/events";
 import { pixel } from "@/lib/meta/pixel";
 import { formatDZD } from "@/lib/money";
+import { computeLine, type Offer } from "@/lib/offers";
 import { cn } from "@/lib/utils";
 import { checkoutSchema, type CheckoutInput } from "@/lib/validators";
-import type { CreateOrderResult } from "@/types/database.types";
 
 export interface FeeInfo {
   home_fee: number;
@@ -30,17 +30,18 @@ export interface FeeInfo {
 interface CheckoutFormProps {
   productId: string;
   price: number;
+  offers?: Offer[];
   deliveryFees: Record<number, FeeInfo>;
 }
 
 const selectClass =
   "h-11 w-full rounded-xl border border-input bg-transparent px-3 text-sm outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40 disabled:opacity-50";
 
-export function CheckoutForm({ productId, price, deliveryFees }: CheckoutFormProps) {
+export function CheckoutForm({ productId, price, offers = [], deliveryFees }: CheckoutFormProps) {
   const { t, lang } = useLang();
   const p = t.product;
   const isAr = lang === "ar";
-  const [submitted, setSubmitted] = useState<CreateOrderResult | null>(null);
+  const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const checkoutTracked = useRef(false);
 
@@ -57,7 +58,6 @@ export function CheckoutForm({ productId, price, deliveryFees }: CheckoutFormPro
       customer_phone: "",
       wilaya_code: "" as unknown as number,
       commune_id: "" as unknown as number,
-      address: "",
       delivery_method: "home",
       quantity: 1,
     },
@@ -85,13 +85,13 @@ export function CheckoutForm({ productId, price, deliveryFees }: CheckoutFormPro
   const fee = deliveryFees[wilayaCode];
   const deliveryFee =
     fee && method === "home" ? fee.home_fee : fee && method === "stopdesk" ? fee.stopdesk_fee : 0;
-  const subtotal = price * quantity;
+  const { subtotal, unitPrice, offer } = computeLine(price, offers, quantity);
   const total = subtotal + deliveryFee;
 
   function trackCheckout() {
     if (checkoutTracked.current) return;
     checkoutTracked.current = true;
-    pixel.initiateCheckout(buildEventPayload([{ product_id: productId, quantity, unit_price: price }]));
+    pixel.initiateCheckout(buildEventPayload([{ product_id: productId, quantity, unit_price: unitPrice }]));
   }
 
   async function onSubmit(values: CheckoutInput) {
@@ -101,31 +101,9 @@ export function CheckoutForm({ productId, price, deliveryFees }: CheckoutFormPro
       setServerError(res.error ?? "Erreur");
       return;
     }
-    pixel.lead(
-      buildEventPayload([{ product_id: productId, quantity: Number(values.quantity), unit_price: price }]),
-      res.result.meta_event_id,
-    );
-    setSubmitted(res.result);
-  }
-
-  if (submitted) {
-    return (
-      <div className="rounded-[20px] border border-[#F4B860]/40 bg-[#F4B860]/8 p-6 text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#2B2724] text-[#F4B860]">✓</div>
-        <h3 className="font-serif text-xl font-medium">{p.successTitle}</h3>
-        <p className="mt-3 text-sm text-foreground/70">{p.successBody}</p>
-        <p className="mt-2 text-sm">
-          {p.orderRef} <span className="font-mono font-medium">#{submitted.order_number}</span>
-        </p>
-        <p className="mt-2 font-serif text-lg font-semibold">{p.total} : {formatDZD(submitted.total)}</p>
-        <Link
-          href={`/commande/${submitted.meta_event_id}`}
-          className="mt-4 inline-flex items-center rounded-full border border-foreground/20 px-5 py-2 text-sm font-semibold transition hover:border-foreground"
-        >
-          {p.viewOrder}
-        </Link>
-      </div>
-    );
+    // The Lead Pixel event fires on the thank-you page (reliable post-navigation
+    // and deduped server-side via meta_event_id). Redirect there now.
+    router.push(`/commande/${res.result.meta_event_id}`);
   }
 
   return (
@@ -183,10 +161,38 @@ export function CheckoutForm({ productId, price, deliveryFees }: CheckoutFormPro
         </div>
       </div>
 
-      {method === "home" && (
+      {offers.length > 0 && (
         <div className="space-y-1.5">
-          <Label htmlFor="address">{p.address}</Label>
-          <Input id="address" {...register("address")} className="h-11 rounded-xl" />
+          <Label>{p.promos}</Label>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {offers.map((o) => {
+              const selected = quantity === o.qty;
+              const each = Math.round(o.price / o.qty);
+              const save = price * o.qty - o.price;
+              return (
+                <button
+                  key={o.qty}
+                  type="button"
+                  onClick={() => setValue("quantity", o.qty, { shouldValidate: true })}
+                  className={cn(
+                    "flex flex-col rounded-xl border p-3 text-start transition",
+                    selected ? "border-[#2B2724] bg-[#F4B860]/10 ring-1 ring-[#F4B860]" : "border-input hover:border-foreground/30",
+                  )}
+                >
+                  <span className="text-sm font-semibold">
+                    {o.qty} {p.promoUnit}
+                  </span>
+                  <span className="font-serif text-base font-semibold">{formatDZD(o.price)}</span>
+                  <span className="text-[11px] text-foreground/55">{p.promoEach.replace("{n}", formatDZD(each))}</span>
+                  {save > 0 && (
+                    <span className="mt-0.5 text-[11px] font-semibold text-[#7BA05B]">
+                      {p.promoSave.replace("{n}", formatDZD(save))}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -196,7 +202,7 @@ export function CheckoutForm({ productId, price, deliveryFees }: CheckoutFormPro
       </div>
 
       <dl className="space-y-1 border-t border-foreground/10 pt-3 text-sm">
-        <Row label={p.subtotal} value={formatDZD(subtotal)} />
+        <Row label={offer ? `${p.subtotal} · ${p.promos}` : p.subtotal} value={formatDZD(subtotal)} />
         <Row label={p.delivery} value={wilayaCode ? formatDZD(deliveryFee) : "—"} />
         <Row label={p.total} value={formatDZD(total)} strong />
       </dl>

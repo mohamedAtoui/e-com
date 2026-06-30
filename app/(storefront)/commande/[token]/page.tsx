@@ -26,5 +26,5 @@ export default async function OrderConfirmationPage({
   const wilaya = getWilaya(summary.wilaya_code)?.name_fr ?? String(summary.wilaya_code);
   const locality = `${commune}, ${wilaya}`;
 
-  return <OrderConfirmation summary={summary} locality={locality} />;
+  return <OrderConfirmation summary={summary} locality={locality} eventId={token} />;
 }

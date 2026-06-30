@@ -1,29 +1,46 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 
 import { useLang } from "@/components/storefront/lang-provider";
+import { META_CURRENCY } from "@/lib/meta/events";
+import { pixel } from "@/lib/meta/pixel";
 import { formatDZD } from "@/lib/money";
 import type { OrderSummary } from "@/types/database.types";
 
 export function OrderConfirmation({
   summary,
   locality,
+  eventId,
 }: {
   summary: NonNullable<OrderSummary>;
   locality: string;
+  eventId: string;
 }) {
   const { t, lang } = useLang();
   const p = t.product;
   const isAr = lang === "ar";
+
+  // Fire the Lead Pixel event once on the thank-you page. Deduped against the
+  // server-side CAPI Lead via the shared event_id (= the order's meta_event_id).
+  const tracked = useRef(false);
+  useEffect(() => {
+    if (tracked.current) return;
+    tracked.current = true;
+    pixel.lead(
+      { content_ids: [], contents: [], value: summary.subtotal, currency: META_CURRENCY },
+      eventId,
+    );
+  }, [eventId, summary.subtotal]);
 
   return (
     <div className="mx-auto max-w-xl px-4 py-16 text-center">
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#2B2724] text-2xl text-[#F4B860]">
         ✓
       </div>
-      <h1 className="font-serif text-3xl font-medium">{p.successTitle}</h1>
-      <p className="mt-2 text-foreground/70">{p.successBody}</p>
+      <h1 className="font-serif text-3xl font-medium">{p.thankTitle}</h1>
+      <p className="mt-2 text-foreground/70">{p.thankBody}</p>
 
       <div className="mx-auto mt-8 max-w-md rounded-[20px] border border-foreground/10 bg-white/60 p-5 text-start">
         <div className="flex justify-between text-sm">
@@ -60,7 +77,7 @@ export function OrderConfirmation({
         href="/collection"
         className="mt-8 inline-flex items-center rounded-full bg-[#2B2724] px-7 py-3 text-[15px] font-semibold text-[#FAF7F2]"
       >
-        {t.col.cta}
+        {p.backHome}
       </Link>
     </div>
   );
