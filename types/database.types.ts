@@ -119,6 +119,23 @@ export type SettingsRow = {
   updated_at: string;
 };
 
+export type LeadStatus = "active" | "converted" | "dismissed";
+
+export type CheckoutLeadRow = {
+  id: string;
+  product_id: string | null;
+  customer_name: string | null;
+  customer_phone: string | null;
+  wilaya_code: number | null;
+  commune_id: number | null;
+  delivery_method: string | null;
+  quantity: number | null;
+  status: LeadStatus;
+  order_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type StockMovementRow = {
   id: string;
   product_id: string;
@@ -180,6 +197,7 @@ export type Database = {
       profiles: Table<ProfileRow>;
       settings: Table<SettingsRow>;
       stock_movements: Table<StockMovementRow>;
+      checkout_leads: Table<CheckoutLeadRow>;
     };
     Views: Record<string, never>;
     Functions: {

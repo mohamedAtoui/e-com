@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createOrder } from "@/actions/orders";
+import { saveCheckoutLead } from "@/actions/leads";
 import { communesForWilaya } from "@/actions/geo";
 import { WILAYAS } from "@/lib/wilayas";
 import type { Commune } from "@/lib/algeria-data";
@@ -66,6 +67,9 @@ export function CheckoutForm({ productId, price, offers = [], deliveryFees }: Ch
   const wilayaCode = Number(watch("wilaya_code")) || 0;
   const method = watch("delivery_method");
   const quantity = Number(watch("quantity")) || 1;
+  const customerName = watch("customer_name");
+  const customerPhone = watch("customer_phone");
+  const communeId = watch("commune_id");
 
   const [communes, setCommunes] = useState<Commune[]>([]);
   useEffect(() => {
@@ -81,6 +85,42 @@ export function CheckoutForm({ productId, price, offers = [], deliveryFees }: Ch
       active = false;
     };
   }, [wilayaCode]);
+
+  // Abandoned-checkout capture: keep one lead row per visit (id in sessionStorage)
+  // and upsert it, debounced, as the shopper fills the form. Persists server-side
+  // only once a plausible phone exists — so the admin sees leads it can call back.
+  const leadIdRef = useRef<string>("");
+  useEffect(() => {
+    try {
+      const key = `lead-${productId}`;
+      let id = sessionStorage.getItem(key);
+      if (!id) {
+        id = crypto.randomUUID();
+        sessionStorage.setItem(key, id);
+      }
+      leadIdRef.current = id;
+    } catch {
+      leadIdRef.current = "";
+    }
+  }, [productId]);
+
+  useEffect(() => {
+    if (!leadIdRef.current) return;
+    if ((customerPhone ?? "").replace(/\D/g, "").length < 9) return;
+    const t = setTimeout(() => {
+      saveCheckoutLead({
+        lead_id: leadIdRef.current,
+        product_id: productId,
+        customer_name: customerName ?? "",
+        customer_phone: customerPhone ?? "",
+        wilaya_code: wilayaCode || null,
+        commune_id: Number(communeId) || null,
+        delivery_method: method ?? null,
+        quantity,
+      }).catch(() => {});
+    }, 900);
+    return () => clearTimeout(t);
+  }, [customerName, customerPhone, wilayaCode, communeId, method, quantity, productId]);
 
   const fee = deliveryFees[wilayaCode];
   const deliveryFee =
@@ -106,7 +146,7 @@ export function CheckoutForm({ productId, price, offers = [], deliveryFees }: Ch
 
   async function onSubmit(values: CheckoutInput) {
     setServerError(null);
-    const res = await createOrder(productId, values);
+    const res = await createOrder(productId, values, leadIdRef.current || undefined);
     if (!res.ok || !res.result) {
       setServerError(res.error ?? "Erreur");
       return;

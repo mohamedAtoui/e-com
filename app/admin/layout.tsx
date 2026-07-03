@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { AdminMobileNav } from "@/components/admin/admin-mobile-nav";
 import { AdminNav } from "@/components/admin/admin-nav";
+import { NewOrderNotifier } from "@/components/admin/new-order-notifier";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AdminLayout({
@@ -24,6 +25,7 @@ export default async function AdminLayout({
 
   return (
     <div className="flex min-h-screen">
+      <NewOrderNotifier />
       <aside className="hidden w-60 shrink-0 border-r bg-muted/20 p-4 md:flex md:flex-col">
         <div className="mb-6 px-3 text-lg font-bold">Lighty</div>
         <AdminNav />

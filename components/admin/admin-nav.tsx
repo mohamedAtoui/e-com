@@ -1,6 +1,6 @@
 "use client";
 
-import { Boxes, ClipboardList, Settings, Store } from "lucide-react";
+import { Boxes, ClipboardList, Settings, ShoppingCart, Store } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/admin/orders", label: "Commandes", icon: ClipboardList },
+  { href: "/admin/leads", label: "Paniers abandonnés", icon: ShoppingCart },
   { href: "/admin/products", label: "Produits", icon: Boxes },
   { href: "/admin/settings", label: "Paramètres", icon: Settings },
 ];

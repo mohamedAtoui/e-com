@@ -11,7 +11,9 @@ Built with **Next.js 16 (App Router)**, **Supabase** (Postgres, Auth, Storage),
   and a successful order redirects to a **thank-you page** (`/commande/[token]`).
 - **Admin** (`/admin/*`, Supabase-Auth protected): orders grouped by product,
   COD-aware stock, product CRUD with image upload + per-product bundle offers,
-  per-wilaya delivery fees, Meta Pixel settings.
+  per-wilaya delivery fees, Meta Pixel settings, an **abandoned-carts** panel
+  (`/admin/leads`), and **new-order notifications** (live in-dashboard toast +
+  Telegram push).
 
 ## Tech & key decisions
 
@@ -41,7 +43,7 @@ components/admin/         OrdersTable bits, ProductForm, ImageUploader, fee edit
 lib/supabase/             client.ts (anon) · server.ts (cookies) · admin.ts (service role)
 lib/meta/                 pixel.ts (client) · capi.ts (server) · events.ts
 lib/algeria-data.ts       bundled wilaya/commune data
-supabase/migrations/      0001_init · 0002_storage · 0003_hardening · 0004_offers_and_pixel
+supabase/migrations/      0001_init · 0002_storage · 0003_hardening · 0004_offers_and_pixel · 0005_leads_and_notify
 supabase/seed_geo.sql     wilayas + communes + placeholder delivery fees
 proxy.ts                  session refresh + /admin/* auth guard
 ```
@@ -64,6 +66,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...           # server-only
 NEXT_PUBLIC_META_PIXEL_ID=              # optional fallback (admin Settings wins)
 META_CAPI_ACCESS_TOKEN=                 # optional (Events Manager → System User token)
+TELEGRAM_BOT_TOKEN=                     # optional (new-order push — @BotFather)
+TELEGRAM_CHAT_ID=                       # optional (your chat/group id)
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
@@ -73,7 +77,8 @@ Run these in the **Supabase SQL Editor** (or via the CLI, below), in order:
 2. `supabase/migrations/0002_storage.sql` — `product-images` bucket + policies
 3. `supabase/migrations/0003_hardening.sql` — integrity, stale-order cleanup, category
 4. `supabase/migrations/0004_offers_and_pixel.sql` — product bundle offers + public Pixel settings
-5. `supabase/seed_geo.sql` — 69 wilayas, 1541 communes, placeholder fees
+5. `supabase/migrations/0005_leads_and_notify.sql` — abandoned-carts table + realtime on orders
+6. `supabase/seed_geo.sql` — 69 wilayas, 1541 communes, placeholder fees
 
 With the Supabase CLI instead:
 ```bash
@@ -110,6 +115,14 @@ npm run dev      # http://localhost:3000
 - **Bundle offers**: set per-product promos ("N pièces = X DA") in the product
   editor. The matching tier is applied automatically at checkout and recomputed
   server-side in `create_order` (never trust the client total).
+- **Abandoned carts** (`/admin/leads`): the checkout form saves a partial lead
+  (debounced) once a phone number is entered, even if the order is never
+  submitted. Converted leads drop off the list automatically; call/WhatsApp the
+  rest to recover the sale.
+- **New-order notifications**: an open dashboard pops a live toast + chime
+  (Supabase Realtime on `orders`). For phone push when the dashboard is closed,
+  set `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` (create a bot with @BotFather,
+  message it, then read `getUpdates` for the chat id). Unset → no-op.
 - The public order endpoint is rate-limited best-effort per IP
   ([`lib/rate-limit.ts`](lib/rate-limit.ts)); for multi-instance hosting back it
   with Redis/Upstash.
