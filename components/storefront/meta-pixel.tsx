@@ -4,6 +4,8 @@ import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
+import { pixel } from "@/lib/meta/pixel";
+
 /**
  * Injects the Meta Pixel base code + initial PageView, and re-fires PageView on
  * client-side route changes (the base snippet only fires once). Storefront only.
@@ -21,9 +23,7 @@ export function MetaPixel({ pixelId }: { pixelId?: string }) {
       firstLoad.current = false;
       return;
     }
-    if (typeof window !== "undefined" && typeof window.fbq === "function") {
-      window.fbq("track", "PageView");
-    }
+    pixel.pageView();
   }, [pathname, pixelId]);
 
   if (!pixelId) return null;
