@@ -5,7 +5,9 @@ import { headers } from "next/headers";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getCommune, getWilaya } from "@/lib/algeria-data";
 import { sendCapiLead, sendCapiPurchase } from "@/lib/meta/capi";
+import { sendOrderNotification } from "@/lib/notify/telegram";
 import { rateLimit } from "@/lib/rate-limit";
 import { checkoutSchema } from "@/lib/validators";
 import type { CreateOrderResult, OrderStatus } from "@/types/database.types";
@@ -30,6 +32,7 @@ export interface CreateOrderState {
 export async function createOrder(
   productId: string,
   raw: unknown,
+  leadId?: string,
 ): Promise<CreateOrderState> {
   const h = await headers();
   const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
@@ -65,6 +68,17 @@ export async function createOrder(
 
   const result = data as unknown as CreateOrderResult;
 
+  // Mark the abandoned-checkout lead as converted (best-effort; non-blocking).
+  if (leadId) {
+    await admin
+      .from("checkout_leads")
+      .update({ status: "converted", order_id: result.order_id })
+      .eq("id", leadId)
+      .then(({ error }) => {
+        if (error) console.error("[lead convert]", error.message);
+      });
+  }
+
   // Server-side CAPI Lead (deduped client-side via meta_event_id).
   await sendCapiLead({
     eventId: result.meta_event_id,
@@ -73,6 +87,26 @@ export async function createOrder(
     name: v.customer_name,
     items: [{ product_id: productId, quantity: v.quantity, unit_price: result.subtotal / v.quantity }],
   }).catch((e) => console.error("[CAPI Lead]", e));
+
+  // Instant new-order push to the store owner (Telegram; no-op if unconfigured).
+  const { data: prod } = await admin
+    .from("products")
+    .select("name_fr")
+    .eq("id", productId)
+    .single();
+  const commune = getCommune(v.commune_id)?.name_fr ?? String(v.commune_id);
+  const wilaya = getWilaya(v.wilaya_code)?.name_fr ?? String(v.wilaya_code);
+  const base = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+  await sendOrderNotification({
+    order_number: result.order_number,
+    customer_name: v.customer_name,
+    customer_phone: v.customer_phone,
+    locality: `${commune}, ${wilaya}`,
+    delivery_method: v.delivery_method,
+    items: [{ name: prod?.name_fr ?? "Produit", quantity: v.quantity }],
+    total: result.total,
+    adminUrl: base ? `${base}/admin/orders/${result.order_id}` : undefined,
+  }).catch((e) => console.error("[notify]", e));
 
   return { ok: true, result };
 }
