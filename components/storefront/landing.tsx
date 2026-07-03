@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 
 import { useLang } from "@/components/storefront/lang-provider";
@@ -133,20 +132,6 @@ export function Landing({ products }: { products: FeaturedProduct[] }) {
               {t.amb.tags.map((tag) => (
                 <span key={tag} className="rounded-full bg-white/70 px-[18px] py-[9px] text-[13.5px] font-semibold text-foreground/70">{tag}</span>
               ))}
-            </div>
-          </div>
-          <div data-reveal data-delay=".1" data-lamp className="relative" style={{ ["--lamp" as string]: 0 }}>
-            <div data-glow className="absolute inset-[-10%] opacity-0 blur-[8px] transition-opacity duration-[1800ms]" style={{ background: "radial-gradient(55% 45% at 50% 30%,rgba(244,184,96,.5),transparent 70%)", zIndex: 0 }} />
-            <div className="relative z-[1] overflow-hidden rounded-[24px]" style={{ boxShadow: "0 44px 80px -34px rgba(43,39,36,.42)" }}>
-              <Image
-                src="/images/pendants-room.jpg"
-                alt={t.amb.title}
-                width={900}
-                height={600}
-                loading="lazy"
-                className="block h-[clamp(380px,52vh,560px)] w-full object-cover transition-[filter] duration-[1800ms]"
-                style={{ filter: "brightness(calc(.74 + var(--lamp,0)*.26)) saturate(calc(.8 + var(--lamp,0)*.25))" }}
-              />
             </div>
           </div>
         </div>
