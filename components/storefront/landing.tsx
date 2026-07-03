@@ -35,8 +35,13 @@ export function Landing({ products }: { products: FeaturedProduct[] }) {
         <div className="relative z-[2] flex flex-col items-center text-center">
           <Kicker>{t.hero.kicker}</Kicker>
           <h1 data-reveal data-delay=".08" className="m-0 font-medium" style={{ fontFamily: SERIF, fontSize: "clamp(48px,8vw,116px)", lineHeight: 0.92, letterSpacing: "-.03em" }}>
-            {t.hero.titleA}{" "}
-            <span style={{ fontStyle: "italic", fontWeight: 400 }}>{t.hero.titleB}</span>
+            {t.hero.titleA}
+            {t.hero.titleB && (
+              <>
+                {" "}
+                <span style={{ fontStyle: "italic", fontWeight: 400 }}>{t.hero.titleB}</span>
+              </>
+            )}
           </h1>
           <p data-reveal data-delay=".16" className="mx-auto mt-[clamp(18px,2.4vw,28px)] max-w-[32em] text-foreground/70" style={{ fontSize: "clamp(16px,1.4vw,19px)", lineHeight: 1.7 }}>
             {t.hero.lede}
