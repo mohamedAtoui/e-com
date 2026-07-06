@@ -115,6 +115,8 @@ export type SettingsRow = {
   id: boolean;
   store_name: string;
   meta_pixel_id: string | null;
+  telegram_bot_token: string | null;
+  telegram_chat_id: string | null;
   free_shipping_threshold: number | null;
   updated_at: string;
 };
