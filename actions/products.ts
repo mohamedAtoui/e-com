@@ -41,6 +41,7 @@ export async function createProduct(raw: unknown): Promise<ProductActionState> {
       category: v.category,
       images: v.images,
       offers: v.offers,
+      description_blocks: v.description_blocks,
     })
     .select("id")
     .single();
@@ -85,6 +86,7 @@ export async function updateProduct(
       category: v.category,
       images: v.images,
       offers: v.offers,
+      description_blocks: v.description_blocks,
     })
     .eq("id", id);
 

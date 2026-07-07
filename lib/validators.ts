@@ -55,6 +55,28 @@ export const productSchema = z
         }),
       )
       .default([]),
+    // Rich description ("A+ content"): ordered heading / paragraph / image blocks.
+    description_blocks: z
+      .array(
+        z.discriminatedUnion("type", [
+          z.object({
+            type: z.literal("heading"),
+            fr: z.string().max(200).default(""),
+            ar: z.string().max(200).default(""),
+          }),
+          z.object({
+            type: z.literal("paragraph"),
+            fr: z.string().max(5000).default(""),
+            ar: z.string().max(5000).default(""),
+          }),
+          z.object({
+            type: z.literal("image"),
+            src: z.string().min(1).max(400),
+            alt: z.string().max(200).default(""),
+          }),
+        ]),
+      )
+      .default([]),
   })
   .refine(
     (p) => p.compare_at_price == null || p.compare_at_price === 0 || p.compare_at_price > p.price,

@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { CheckoutForm, type FeeInfo } from "@/components/storefront/checkout-form";
 import { useLang } from "@/components/storefront/lang-provider";
+import { ProductDescription } from "@/components/storefront/product-description";
 import { ProductGallery } from "@/components/storefront/product-gallery";
 import { formatDZD } from "@/lib/money";
 import { normalizeOffers } from "@/lib/offers";
@@ -94,6 +95,8 @@ export function ProductDetail({
           )}
         </div>
       </div>
+
+      <ProductDescription blocks={product.description_blocks ?? []} />
     </div>
   );
 }

@@ -33,6 +33,11 @@ export type StockMovementType =
 
 type Timestamps = { created_at: string; updated_at: string };
 
+export type ContentBlock =
+  | { type: "heading"; fr: string; ar: string }
+  | { type: "paragraph"; fr: string; ar: string }
+  | { type: "image"; src: string; alt: string };
+
 export type ProductRow = Timestamps & {
   id: string;
   slug: string;
@@ -48,6 +53,7 @@ export type ProductRow = Timestamps & {
   category: ProductCategory;
   images: string[];
   offers: { qty: number; price: number }[];
+  description_blocks: ContentBlock[];
 };
 
 export type OrderRow = {
