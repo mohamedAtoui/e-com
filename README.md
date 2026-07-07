@@ -43,7 +43,7 @@ components/admin/         OrdersTable bits, ProductForm, ImageUploader, fee edit
 lib/supabase/             client.ts (anon) · server.ts (cookies) · admin.ts (service role)
 lib/meta/                 pixel.ts (client) · capi.ts (server) · events.ts
 lib/algeria-data.ts       bundled wilaya/commune data
-supabase/migrations/      0001_init · 0002_storage · 0003_hardening · 0004_offers_and_pixel · 0005_leads_and_notify
+supabase/migrations/      0001_init · 0002_storage · 0003_hardening · 0004_offers_and_pixel · 0005_leads_and_notify · 0006_telegram_settings · 0007_description_blocks
 supabase/seed_geo.sql     wilayas + communes + placeholder delivery fees
 proxy.ts                  session refresh + /admin/* auth guard
 ```
@@ -78,7 +78,9 @@ Run these in the **Supabase SQL Editor** (or via the CLI, below), in order:
 3. `supabase/migrations/0003_hardening.sql` — integrity, stale-order cleanup, category
 4. `supabase/migrations/0004_offers_and_pixel.sql` — product bundle offers + public Pixel settings
 5. `supabase/migrations/0005_leads_and_notify.sql` — abandoned-carts table + realtime on orders
-6. `supabase/seed_geo.sql` — 69 wilayas, 1541 communes, placeholder fees
+6. `supabase/migrations/0006_telegram_settings.sql` — Telegram config columns on settings
+7. `supabase/migrations/0007_description_blocks.sql` — rich product description blocks
+8. `supabase/seed_geo.sql` — 69 wilayas, 1541 communes, placeholder fees
 
 With the Supabase CLI instead:
 ```bash

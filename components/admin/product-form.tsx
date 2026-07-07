@@ -6,6 +6,7 @@ import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { createProduct, updateProduct } from "@/actions/products";
+import { DescriptionBlocksEditor } from "@/components/admin/description-blocks-editor";
 import { ImageUploader } from "@/components/admin/image-uploader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { productSchema, slugify, type ProductInput } from "@/lib/validators";
-import type { ProductRow } from "@/types/database.types";
+import type { ContentBlock, ProductRow } from "@/types/database.types";
 
 export function ProductForm({ initial }: { initial?: ProductRow }) {
   const router = useRouter();
@@ -41,6 +42,7 @@ export function ProductForm({ initial }: { initial?: ProductRow }) {
       category: initial?.category ?? "autre",
       images: initial?.images ?? [],
       offers: initial?.offers ?? [],
+      description_blocks: initial?.description_blocks ?? [],
     },
   });
 
@@ -134,6 +136,25 @@ export function ProductForm({ initial }: { initial?: ProductRow }) {
           <Label htmlFor="description_ar">Description (AR) — الوصف</Label>
           <Textarea id="description_ar" rows={5} dir="rtl" className="font-arabic" {...register("description_ar")} />
         </div>
+      </div>
+
+      <div className="space-y-2 rounded-lg border p-4">
+        <div>
+          <Label>Description enrichie (style Amazon)</Label>
+          <p className="text-xs text-muted-foreground">
+            Titres, paragraphes et images empilés, affichés en bas de la page produit.
+          </p>
+        </div>
+        <Controller
+          control={control}
+          name="description_blocks"
+          render={({ field }) => (
+            <DescriptionBlocksEditor
+              value={(field.value ?? []) as ContentBlock[]}
+              onChange={field.onChange}
+            />
+          )}
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
