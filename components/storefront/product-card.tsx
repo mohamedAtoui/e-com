@@ -48,17 +48,6 @@ export function ProductCard({ product }: { product: CardProduct }) {
             className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
           />
         ) : null}
-        {/* warm bloom — off by default, switches on at hover */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-[42%] z-[1] h-[64%] w-[84%] -translate-x-1/2 opacity-20 transition-opacity duration-700 group-hover:opacity-100"
-          style={{ background: "radial-gradient(46% 44% at 50% 16%,rgba(244,184,96,.95),rgba(244,184,96,.26) 50%,transparent 76%)" }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute bottom-[8%] left-1/2 z-[1] h-[13%] w-[60%] -translate-x-1/2 opacity-20 blur-[3px] transition-opacity duration-700 group-hover:opacity-100"
-          style={{ background: "radial-gradient(50% 100% at 50% 0,rgba(244,184,96,.5),transparent 72%)" }}
-        />
         {onSale ? (
           <span className="absolute left-3 top-3 z-[2] rounded-full bg-[#2B2724] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#FAF7F2]">
             {isAr ? "تخفيض" : "Promo"}
