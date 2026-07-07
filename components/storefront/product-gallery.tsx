@@ -2,10 +2,12 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { productImageUrl } from "@/lib/images";
+
+const AUTOPLAY_MS = 4000;
 
 /**
  * Amazon-style product gallery:
@@ -17,9 +19,29 @@ import { productImageUrl } from "@/lib/images";
  */
 export function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
   const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const activeRef = useRef(0);
+  activeRef.current = active;
   const has = images && images.length > 0;
   const many = has && images.length > 1;
+  const count = images.length;
+
+  // Auto-advance when there are several images. Pauses on hover (desktop) or as
+  // soon as the visitor takes control by swiping (mobile). Syncs the mobile
+  // carousel only when it's actually on screen (clientWidth > 0).
+  useEffect(() => {
+    if (!many || paused) return;
+    const id = setInterval(() => {
+      const next = (activeRef.current + 1) % count;
+      setActive(next);
+      const el = scrollRef.current;
+      if (el && el.clientWidth > 0) {
+        el.scrollTo({ left: next * el.clientWidth, behavior: "smooth" });
+      }
+    }, AUTOPLAY_MS);
+    return () => clearInterval(id);
+  }, [many, paused, count]);
 
   if (!has) {
     return (
@@ -44,7 +66,11 @@ export function ProductGallery({ images, alt }: { images: string[]; alt: string 
   }
 
   return (
-    <div className="flex flex-col gap-3 md:flex-row md:gap-4">
+    <div
+      className="flex flex-col gap-3 md:flex-row md:gap-4"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
       {/* Thumbnail rail — desktop only, vertical (Amazon-style) */}
       {many && (
         <div className="hidden max-h-[540px] flex-col gap-2.5 overflow-y-auto pe-1 md:flex">
@@ -92,6 +118,7 @@ export function ProductGallery({ images, alt }: { images: string[]; alt: string 
           <div
             ref={scrollRef}
             onScroll={onCarouselScroll}
+            onTouchStart={() => setPaused(true)}
             dir="ltr"
             className="flex snap-x snap-mandatory overflow-x-auto rounded-2xl border border-foreground/10 bg-white [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
@@ -117,7 +144,10 @@ export function ProductGallery({ images, alt }: { images: string[]; alt: string 
                   type="button"
                   aria-label={`Image ${i + 1}`}
                   aria-current={i === active}
-                  onClick={() => scrollToIndex(i)}
+                  onClick={() => {
+                    setPaused(true);
+                    scrollToIndex(i);
+                  }}
                   className={cn(
                     "h-1.5 rounded-full transition-all",
                     i === active ? "w-5 bg-[#2B2724]" : "w-1.5 bg-foreground/25",
