@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AdminMobileNav } from "@/components/admin/admin-mobile-nav";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { NewOrderNotifier } from "@/components/admin/new-order-notifier";
+import { myPages } from "@/lib/admin-guard";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AdminLayout({
@@ -23,18 +24,21 @@ export default async function AdminLayout({
   const { data: isAdmin } = await supabase.rpc("is_admin");
   if (!isAdmin) redirect("/");
 
+  // null → RBAC not active yet (pre-0009): show all links.
+  const pages = (await myPages()) ?? undefined;
+
   return (
     <div className="flex min-h-screen">
       <NewOrderNotifier />
       <aside className="hidden w-60 shrink-0 border-r bg-muted/20 p-4 md:flex md:flex-col">
         <div className="mb-6 px-3 text-lg font-bold">Lighty</div>
-        <AdminNav />
+        <AdminNav pages={pages} />
         <p className="mt-auto truncate px-3 pt-4 text-xs text-muted-foreground">
           {user.email}
         </p>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <AdminMobileNav />
+        <AdminMobileNav pages={pages} />
         <main className="flex-1 overflow-x-hidden bg-background">{children}</main>
       </div>
     </div>

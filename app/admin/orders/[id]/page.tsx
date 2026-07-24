@@ -15,7 +15,7 @@ import {
 import { getCommune, getWilaya } from "@/lib/algeria-data";
 import { formatDZD } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
-import type { OrderItemRow, OrderRow } from "@/types/database.types";
+import type { OrderItemRow, OrderRow, OrderStatusRow } from "@/types/database.types";
 
 export const dynamic = "force-dynamic";
 
@@ -28,11 +28,11 @@ export default async function OrderDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("orders")
-    .select("*, order_items(*)")
-    .eq("id", id)
-    .single<OrderDetail>();
+  const [{ data }, { data: statusRows }] = await Promise.all([
+    supabase.from("orders").select("*, order_items(*)").eq("id", id).single<OrderDetail>(),
+    supabase.from("order_statuses").select("*").order("sort_order"),
+  ]);
+  const statuses = (statusRows ?? []) as OrderStatusRow[];
 
   if (!data) notFound();
 
@@ -55,12 +55,12 @@ export default async function OrderDetailPage({
             {new Date(data.created_at).toLocaleString("fr-FR")}
           </p>
         </div>
-        <StatusBadge status={data.status} className="text-sm" />
+        <StatusBadge status={data.status} statuses={statuses} className="text-sm" />
       </div>
 
       <div className="rounded-xl border p-4">
         <h2 className="mb-3 font-semibold">Mettre à jour le statut</h2>
-        <OrderStatusControl orderId={data.id} status={data.status} />
+        <OrderStatusControl orderId={data.id} status={data.status} statuses={statuses} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

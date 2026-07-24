@@ -13,26 +13,28 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ORDER_STATUSES, STATUS_LABELS } from "@/lib/orders";
+import { statusLabel } from "@/lib/orders";
 import { cn } from "@/lib/utils";
-import type { OrderStatus } from "@/types/database.types";
+import type { OrderStatusRow } from "@/types/database.types";
 
 export function OrderStatusControl({
   orderId,
   status,
+  statuses,
 }: {
   orderId: string;
-  status: OrderStatus;
+  status: string;
+  statuses: OrderStatusRow[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
-  function move(to: OrderStatus) {
+  function move(to: string) {
     if (to === status) return;
     startTransition(async () => {
       const res = await updateOrderStatus(orderId, to);
       if (res.ok) {
-        toast.success(`Commande → ${STATUS_LABELS[to]}`);
+        toast.success(`Commande → ${statusLabel(to, statuses)}`);
         router.refresh();
       } else {
         toast.error(res.error ?? "Échec de la mise à jour");
@@ -40,21 +42,21 @@ export function OrderStatusControl({
     });
   }
 
+  const hasConfirm = statuses.some((s) => s.key === "confirmed");
+  const hasCancel = statuses.some((s) => s.key === "cancelled");
+
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      {/* Quick COD actions */}
-      {status !== "confirmed" && (
+      {hasConfirm && status !== "confirmed" && (
         <Button size="sm" disabled={pending} onClick={() => move("confirmed")}>
           Confirmer
         </Button>
       )}
-      {status !== "cancelled" && (
+      {hasCancel && status !== "cancelled" && (
         <Button size="sm" variant="outline" disabled={pending} onClick={() => move("cancelled")}>
           Annuler
         </Button>
       )}
-
-      {/* Set any status */}
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
@@ -64,10 +66,10 @@ export function OrderStatusControl({
           }
         />
         <DropdownMenuContent align="end">
-          {ORDER_STATUSES.map((s) => (
-            <DropdownMenuItem key={s} onClick={() => move(s)}>
-              <Check className={cn("size-3.5", s === status ? "opacity-100" : "opacity-0")} />
-              {STATUS_LABELS[s]}
+          {statuses.map((s) => (
+            <DropdownMenuItem key={s.key} onClick={() => move(s.key)}>
+              <Check className={cn("size-3.5", s.key === status ? "opacity-100" : "opacity-0")} />
+              {s.label_fr}
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>

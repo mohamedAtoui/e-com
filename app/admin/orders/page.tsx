@@ -11,12 +11,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { guardPage } from "@/lib/admin-guard";
 import { getCommune, getWilaya } from "@/lib/algeria-data";
 import { formatDZD } from "@/lib/money";
-import { ORDER_STATUSES, STATUS_LABELS } from "@/lib/orders";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
-import type { OrderRow, OrderStatus } from "@/types/database.types";
+import type { OrderRow, OrderStatusRow } from "@/types/database.types";
 
 export const dynamic = "force-dynamic";
 
@@ -33,12 +33,16 @@ export default async function OrdersPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
+  await guardPage("orders");
   const { status } = await searchParams;
-  const activeStatus = ORDER_STATUSES.includes(status as OrderStatus)
-    ? (status as OrderStatus)
-    : undefined;
-
   const supabase = await createClient();
+
+  const { data: statusRows } = await supabase
+    .from("order_statuses")
+    .select("*")
+    .order("sort_order");
+  const statuses = (statusRows ?? []) as OrderStatusRow[];
+  const activeStatus = statuses.some((s) => s.key === status) ? status : undefined;
 
   let query = supabase
     .from("orders")
@@ -87,13 +91,13 @@ export default async function OrdersPage({
       {/* status filter bar */}
       <div className="flex flex-wrap gap-2">
         <FilterPill href="/admin/orders" label="Toutes" count={totalCount} active={!activeStatus} />
-        {ORDER_STATUSES.map((s) => (
+        {statuses.map((s) => (
           <FilterPill
-            key={s}
-            href={`/admin/orders?status=${s}`}
-            label={STATUS_LABELS[s]}
-            count={counts[s] ?? 0}
-            active={activeStatus === s}
+            key={s.key}
+            href={`/admin/orders?status=${s.key}`}
+            label={s.label_fr}
+            count={counts[s.key] ?? 0}
+            active={activeStatus === s.key}
           />
         ))}
       </div>
@@ -156,10 +160,10 @@ export default async function OrdersPage({
                           {formatDZD(o.total)}
                         </TableCell>
                         <TableCell>
-                          <StatusBadge status={o.status} />
+                          <StatusBadge status={o.status} statuses={statuses} />
                         </TableCell>
                         <TableCell>
-                          <OrderStatusControl orderId={o.id} status={o.status} />
+                          <OrderStatusControl orderId={o.id} status={o.status} statuses={statuses} />
                         </TableCell>
                       </TableRow>
                     ))}

@@ -1,4 +1,5 @@
 import { LeadsTable, type LeadView } from "@/components/admin/leads-table";
+import { guardPage } from "@/lib/admin-guard";
 import { getCommune, getWilaya } from "@/lib/algeria-data";
 import { createClient } from "@/lib/supabase/server";
 import type { CheckoutLeadRow } from "@/types/database.types";
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 type LeadRow = CheckoutLeadRow & { products: { name_fr: string } | null };
 
 export default async function LeadsPage() {
+  await guardPage("leads");
   const supabase = await createClient();
   const { data } = await supabase
     .from("checkout_leads")

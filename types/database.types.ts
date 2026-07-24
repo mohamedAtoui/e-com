@@ -9,13 +9,17 @@
  * makes the whole Postgrest schema resolve to `never`.
  */
 
-export type OrderStatus =
+// Order statuses are now editable in the DB (order_statuses table), so this is
+// a free string. The 6 built-ins are still referenced by key across the app.
+export type OrderStatus = string;
+export type SystemOrderStatus =
   | "pending"
   | "confirmed"
   | "shipped"
   | "delivered"
   | "cancelled"
   | "returned";
+export type StockEffect = "reserved" | "sold" | "none";
 
 export type DeliveryMethod = "home" | "stopdesk";
 export type ProductCategory =
@@ -114,6 +118,7 @@ export type ProfileRow = {
   email: string | null;
   full_name: string | null;
   role: "admin" | "commercial";
+  role_id: string | null;
   created_at: string;
 };
 
@@ -151,6 +156,24 @@ export type StockMovementRow = {
   delta: number;
   type: StockMovementType;
   created_by: string | null;
+  created_at: string;
+};
+
+export type OrderStatusRow = {
+  key: string;
+  label_fr: string;
+  label_ar: string;
+  stock_effect: StockEffect;
+  color: string;
+  sort_order: number;
+  is_system: boolean;
+};
+
+export type RoleRow = {
+  id: string;
+  name: string;
+  pages: string[];
+  is_system: boolean;
   created_at: string;
 };
 
@@ -206,6 +229,8 @@ export type Database = {
       settings: Table<SettingsRow>;
       stock_movements: Table<StockMovementRow>;
       checkout_leads: Table<CheckoutLeadRow>;
+      order_statuses: Table<OrderStatusRow>;
+      roles: Table<RoleRow>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -218,6 +243,8 @@ export type Database = {
         Returns: undefined;
       };
       is_admin: { Args: Record<string, never>; Returns: boolean };
+      my_pages: { Args: Record<string, never>; Returns: string[] };
+      has_page: { Args: { p: string }; Returns: boolean };
       get_order_summary: { Args: { p_event_id: string }; Returns: OrderSummary };
       get_storefront_settings: {
         Args: Record<string, never>;

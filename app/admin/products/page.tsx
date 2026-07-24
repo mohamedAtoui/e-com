@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { guardPage } from "@/lib/admin-guard";
 import { productImageUrl } from "@/lib/images";
 import { formatDZD } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
@@ -20,6 +21,7 @@ import { createClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {
+  await guardPage("products");
   const supabase = await createClient();
   const { data: products } = await supabase
     .from("products")

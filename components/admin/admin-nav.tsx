@@ -9,17 +9,18 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
-  { href: "/admin/orders", label: "Commandes", icon: ClipboardList },
-  { href: "/admin/leads", label: "Paniers abandonnés", icon: ShoppingCart },
-  { href: "/admin/products", label: "Produits", icon: Boxes },
-  { href: "/admin/settings", label: "Paramètres", icon: Settings },
+  { href: "/admin/orders", label: "Commandes", icon: ClipboardList, page: "orders" },
+  { href: "/admin/leads", label: "Paniers abandonnés", icon: ShoppingCart, page: "leads" },
+  { href: "/admin/products", label: "Produits", icon: Boxes, page: "products" },
+  { href: "/admin/settings", label: "Paramètres", icon: Settings, page: "settings" },
 ];
 
-export function AdminNav() {
+export function AdminNav({ pages }: { pages?: string[] }) {
   const pathname = usePathname();
+  const links = pages ? LINKS.filter((l) => pages.includes(l.page)) : LINKS;
   return (
     <nav className="flex flex-col gap-1">
-      {LINKS.map((l) => {
+      {links.map((l) => {
         const active = pathname.startsWith(l.href);
         const Icon = l.icon;
         return (

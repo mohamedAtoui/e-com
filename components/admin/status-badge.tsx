@@ -1,24 +1,28 @@
-import { Badge } from "@/components/ui/badge";
-import { STATUS_BADGE_VARIANT, STATUS_LABELS } from "@/lib/orders";
+import { statusColor, statusLabel } from "@/lib/orders";
 import { cn } from "@/lib/utils";
-import type { OrderStatus } from "@/types/database.types";
+import type { OrderStatusRow } from "@/types/database.types";
 
 export function StatusBadge({
   status,
+  statuses,
   className,
 }: {
-  status: OrderStatus;
+  status: string;
+  statuses?: OrderStatusRow[];
   className?: string;
 }) {
+  const color = statusColor(status, statuses);
+  const label = statusLabel(status, statuses);
   return (
-    <Badge
-      variant={STATUS_BADGE_VARIANT[status]}
+    <span
       className={cn(
-        status === "delivered" && "bg-primary text-primary-foreground",
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold",
         className,
       )}
+      style={{ background: `${color}1a`, color }}
     >
-      {STATUS_LABELS[status]}
-    </Badge>
+      <span className="size-1.5 rounded-full" style={{ background: color }} />
+      {label}
+    </span>
   );
 }

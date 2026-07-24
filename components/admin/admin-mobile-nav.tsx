@@ -8,15 +8,16 @@ import { signOut } from "@/actions/auth";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
-  { href: "/admin/orders", label: "Commandes", icon: ClipboardList },
-  { href: "/admin/leads", label: "Paniers", icon: ShoppingCart },
-  { href: "/admin/products", label: "Produits", icon: Boxes },
-  { href: "/admin/settings", label: "Paramètres", icon: Settings },
+  { href: "/admin/orders", label: "Commandes", icon: ClipboardList, page: "orders" },
+  { href: "/admin/leads", label: "Paniers", icon: ShoppingCart, page: "leads" },
+  { href: "/admin/products", label: "Produits", icon: Boxes, page: "products" },
+  { href: "/admin/settings", label: "Paramètres", icon: Settings, page: "settings" },
 ];
 
 /** Sticky top navigation shown only on mobile (the sidebar is md+ only). */
-export function AdminMobileNav() {
+export function AdminMobileNav({ pages }: { pages?: string[] }) {
   const pathname = usePathname();
+  const links = pages ? LINKS.filter((l) => pages.includes(l.page)) : LINKS;
   return (
     <div className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur md:hidden">
       <div className="flex items-center justify-between px-4 py-2.5">
@@ -28,7 +29,7 @@ export function AdminMobileNav() {
         </form>
       </div>
       <nav className="flex gap-1 overflow-x-auto px-3 pb-2">
-        {LINKS.map((l) => {
+        {links.map((l) => {
           const active = pathname.startsWith(l.href);
           const Icon = l.icon;
           return (
