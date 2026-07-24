@@ -69,12 +69,13 @@ function Row({ initial }: { initial: Draft }) {
         <Input type="number" className="h-9 w-16" value={d.sort_order} onChange={(e) => setD({ ...d, sort_order: Number(e.target.value) })} />
       </div>
       <Button size="sm" onClick={save} disabled={pending}>Enregistrer</Button>
-      {!d.is_system && (
+      {d.key !== "pending" ? (
         <Button size="sm" variant="outline" onClick={remove} disabled={pending} aria-label="Supprimer">
           <Trash2 className="size-4" />
         </Button>
+      ) : (
+        <span className="pb-2 text-xs text-muted-foreground">requis</span>
       )}
-      {d.is_system && <span className="pb-2 text-xs text-muted-foreground">système</span>}
     </div>
   );
 }

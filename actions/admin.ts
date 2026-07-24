@@ -37,14 +37,18 @@ export async function saveOrderStatus(input: {
 }
 
 export async function deleteOrderStatus(key: string): Promise<ActionState> {
+  // "pending" is required: every new order is created with it.
+  if (key === "pending")
+    return { ok: false, error: "Le statut « En attente » est requis et ne peut pas être supprimé." };
   const supabase = await createClient();
-  const { error } = await supabase.from("order_statuses").delete().eq("key", key).eq("is_system", false);
+  const { error } = await supabase.from("order_statuses").delete().eq("key", key);
   if (error) {
     if (error.message.includes("foreign key") || error.message.includes("still referenced"))
-      return { ok: false, error: "Des commandes utilisent ce statut." };
+      return { ok: false, error: "Des commandes utilisent ce statut — changez-les d'abord." };
     return { ok: false, error: error.message };
   }
   revalidatePath("/admin/settings");
+  revalidatePath("/admin/orders");
   return { ok: true };
 }
 
@@ -66,8 +70,13 @@ export async function saveRole(input: {
 
 export async function deleteRole(id: string): Promise<ActionState> {
   const supabase = await createClient();
+  // is_system (Administrateur) stays as the super-admin safety net.
   const { error } = await supabase.from("roles").delete().eq("id", id).eq("is_system", false);
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    if (error.message.includes("foreign key") || error.message.includes("still referenced"))
+      return { ok: false, error: "Des utilisateurs ont ce rôle — réassignez-les d'abord." };
+    return { ok: false, error: error.message };
+  }
   revalidatePath("/admin/settings");
   return { ok: true };
 }
