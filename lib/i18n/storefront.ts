@@ -65,6 +65,9 @@ export interface StorefrontDict {
     thankTitle: string;
     thankBody: string;
     backHome: string;
+    orderCta: string;
+    save: string;
+    trust: { cod: string; delivery: string; guarantee: string; handmade: string };
   };
 }
 
@@ -151,6 +154,14 @@ export const DICT: Record<Lang, StorefrontDict> = {
       thankTitle: "Merci pour votre commande !",
       thankBody: "Votre commande a bien été enregistrée. Nous vous appellerons très bientôt pour confirmer la livraison.",
       backHome: "Continuer mes achats",
+      orderCta: "Commander maintenant",
+      save: "Économisez",
+      trust: {
+        cod: "Paiement à la livraison",
+        delivery: "Livraison 58 wilayas",
+        guarantee: "Garantie & échange",
+        handmade: "Fait main à Alger",
+      },
     },
   },
   ar: {
@@ -235,6 +246,14 @@ export const DICT: Record<Lang, StorefrontDict> = {
       thankTitle: "شكرًا على طلبك !",
       thankBody: "تم تسجيل طلبك بنجاح. سنتصل بك قريبًا جدًا لتأكيد التوصيل.",
       backHome: "مواصلة التسوّق",
+      orderCta: "اطلب الآن",
+      save: "وفّر",
+      trust: {
+        cod: "الدفع عند الاستلام",
+        delivery: "توصيل لـ 58 ولاية",
+        guarantee: "ضمان واستبدال",
+        handmade: "صناعة يدوية بالجزائر",
+      },
     },
   },
 };
