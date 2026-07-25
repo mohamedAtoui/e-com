@@ -42,7 +42,7 @@ export function ProductDetail({
     { icon: ShieldCheck, label: t.product.trust.cod },
     { icon: Truck, label: t.product.trust.delivery },
     { icon: RotateCcw, label: t.product.trust.guarantee },
-    { icon: Sparkles, label: t.product.trust.handmade },
+    { icon: Sparkles, label: t.product.trust.quality },
   ];
 
   return (

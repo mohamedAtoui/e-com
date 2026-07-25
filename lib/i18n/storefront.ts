@@ -67,7 +67,7 @@ export interface StorefrontDict {
     backHome: string;
     orderCta: string;
     save: string;
-    trust: { cod: string; delivery: string; guarantee: string; handmade: string };
+    trust: { cod: string; delivery: string; guarantee: string; quality: string };
   };
 }
 
@@ -75,22 +75,22 @@ export const DICT: Record<Lang, StorefrontDict> = {
   fr: {
     dir: "ltr",
     langLabel: "العربية",
-    nav: { collections: "Collections", story: "Notre histoire", ambiance: "Ambiance", cart: "Panier" },
+    nav: { collections: "Collections", story: "Notre sélection", ambiance: "Ambiance", cart: "Panier" },
     trustStrip: "Paiement à la livraison · Livraison partout en Algérie",
     hero: {
-      kicker: "Atelier · Alger",
+      kicker: "Luminaires · Algérie",
       titleA: "La lumière.",
       titleB: "",
-      lede: "Luminaires et objets de notre atelier — pour réchauffer chaque pièce d'une lueur douce.",
+      lede: "Une sélection de luminaires modernes pour éclairer et réchauffer chaque pièce de votre maison.",
       cta: "Découvrir la collection",
-      cta2: "Notre histoire",
+      cta2: "En savoir plus",
       scrollHint: "Faites défiler",
     },
     story: {
-      kicker: "Notre histoire",
-      title: "Façonné par des mains, allumé par la lumière.",
-      body: "Chaque pièce est soufflée, martelée et assemblée à la main. Le laiton patiné, le verre ambré, la lumière qui respire — rien n'est pressé, tout est ressenti.",
-      crafts: ["Laiton martelé", "Verre soufflé", "Rotin tressé", "Patine naturelle"],
+      kicker: "Notre sélection",
+      title: "Des luminaires pensés pour chaque pièce.",
+      body: "Suspensions, appliques, lampes à poser et lanternes — choisis pour leur design, leur qualité et la douceur de leur lumière.",
+      crafts: ["Suspensions", "Appliques", "Lampes à poser", "Lanternes"],
     },
     col: { kicker: "La collection", title: "Des pièces qui s'allument.", cta: "Voir tout", addToCart: "Voir le produit", empty: "Aucun produit disponible pour le moment." },
     amb: {
@@ -108,7 +108,7 @@ export const DICT: Record<Lang, StorefrontDict> = {
       ],
     },
     cta: { title: "Apportez la lumière chez vous.", body: "Une pièce, une lueur, une atmosphère. Commencez votre collection dès aujourd'hui.", btn: "Commander maintenant" },
-    foot: { nav: ["Collections", "Notre histoire", "Ambiance", "Contact"], note: "© 2026 Lighty · Atelier d'Alger" },
+    foot: { nav: ["Collections", "Notre sélection", "Ambiance", "Contact"], note: "© 2026 Lighty · Luminaires & décoration · Algérie" },
     colPage: {
       kicker: "Toute la collection",
       title: "La lumière, pièce par pièce.",
@@ -160,29 +160,29 @@ export const DICT: Record<Lang, StorefrontDict> = {
         cod: "Paiement à la livraison",
         delivery: "Livraison 58 wilayas",
         guarantee: "Garantie & échange",
-        handmade: "Fait main à Alger",
+        quality: "Qualité vérifiée",
       },
     },
   },
   ar: {
     dir: "rtl",
     langLabel: "Français",
-    nav: { collections: "المجموعات", story: "قصّتنا", ambiance: "الأجواء", cart: "السلّة" },
+    nav: { collections: "المجموعات", story: "تشكيلتنا", ambiance: "الأجواء", cart: "السلّة" },
     trustStrip: "الدفع عند الاستلام · توصيل لكل الجزائر",
     hero: {
-      kicker: "الورشة · الجزائر",
+      kicker: "إنارة · الجزائر",
       titleA: "الضوء.",
       titleB: "",
-      lede: "مصابيح وقطع من ورشتنا — لتغمر كل غرفة بدفءٍ هادئ.",
+      lede: "تشكيلة من المصابيح العصرية لإضاءة كل غرفة في بيتك بدفءٍ هادئ.",
       cta: "اكتشف المجموعة",
-      cta2: "قصّتنا",
+      cta2: "اعرف المزيد",
       scrollHint: "مرّر للأسفل",
     },
     story: {
-      kicker: "قصّتنا",
-      title: "تُشكّله الأيادي، ويُضيئه النور.",
-      body: "كل قطعة تُنفخ وتُطرق وتُجمع يدويًا. نحاسٌ بباتينا، زجاجٌ كهرماني، وضوءٌ يتنفّس — لا شيء على عجل، كل شيء بإحساس.",
-      crafts: ["نحاس مطروق", "زجاج منفوخ", "روطان مضفور", "باتينا طبيعية"],
+      kicker: "تشكيلتنا",
+      title: "مصابيح لكل ركن من بيتك.",
+      body: "تعليقات، إضاءات جدارية، مصابيح طاولة وفوانيس — مختارة بعناية لتصميمها وجودتها ونعومة ضوئها.",
+      crafts: ["تعليقات", "إضاءات جدارية", "مصابيح طاولة", "فوانيس"],
     },
     col: { kicker: "المجموعة", title: "قطعٌ تُضيء.", cta: "عرض الكل", addToCart: "عرض المنتج", empty: "لا توجد منتجات متاحة حاليًا." },
     amb: {
@@ -193,14 +193,14 @@ export const DICT: Record<Lang, StorefrontDict> = {
     },
     val: {
       kicker: "لماذا Lighty",
-      title: "مصنوعٌ لأجلك، حتى باب بيتك.",
+      title: "مُختارٌ لأجلك، حتى باب بيتك.",
       items: [
         { t: "الدفع عند الاستلام", d: "ادفع نقدًا حين تصل طلبيتك. دون مقدّم، دون مخاطرة." },
         { t: "توصيل لكل الجزائر", d: "يُشحن بعناية من الجزائر، مغلّفًا ليصل دون خدش." },
       ],
     },
     cta: { title: "أدخِل الضوء إلى بيتك.", body: "قطعةٌ واحدة، وميضٌ واحد، أجواءٌ كاملة. ابدأ مجموعتك اليوم.", btn: "اطلب الآن" },
-    foot: { nav: ["المجموعات", "قصّتنا", "الأجواء", "تواصل"], note: "© 2026 Lighty · ورشة الجزائر" },
+    foot: { nav: ["المجموعات", "تشكيلتنا", "الأجواء", "تواصل"], note: "© 2026 Lighty · إنارة وديكور · الجزائر" },
     colPage: {
       kicker: "كل المجموعة",
       title: "الضوء، قطعةً قطعة.",
@@ -252,7 +252,7 @@ export const DICT: Record<Lang, StorefrontDict> = {
         cod: "الدفع عند الاستلام",
         delivery: "توصيل لـ 58 ولاية",
         guarantee: "ضمان واستبدال",
-        handmade: "صناعة يدوية بالجزائر",
+        quality: "جودة مضمونة",
       },
     },
   },

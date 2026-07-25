@@ -20,9 +20,9 @@ export const metadata: Metadata = {
   metadataBase: process.env.NEXT_PUBLIC_SITE_URL
     ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
     : undefined,
-  title: "Lighty — Luminaires faits main",
+  title: "Lighty — Luminaires & décoration",
   description:
-    "Lighty · Atelier d'Alger. Luminaires et objets façonnés à la main. Paiement à la livraison, partout en Algérie.",
+    "Lighty · Luminaires et objets de décoration : suspensions, appliques, lampes et lanternes. Paiement à la livraison, partout en Algérie.",
 };
 
 // Runs before first paint: applies the saved Arabic/RTL preference on the
