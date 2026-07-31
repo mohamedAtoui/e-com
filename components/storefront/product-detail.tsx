@@ -107,20 +107,8 @@ export function ProductDetail({
             })}
           </div>
 
-          {/* Bulk offers */}
-          {offers.length > 0 && (
-            <div className="rounded-[16px] border border-[#F4B860]/40 bg-[#F4B860]/10 p-4">
-              <p className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-[#b4773f]">{t.product.promos}</p>
-              <div className="flex flex-wrap gap-2">
-                {offers.map((o) => (
-                  <span key={o.qty} className="inline-flex items-baseline gap-1.5 rounded-full bg-white/70 px-3 py-1 text-sm">
-                    <span className="font-semibold">{o.qty} {t.product.promoUnit}</span>
-                    <span className="font-serif font-semibold">{formatDZD(o.price)}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Bundle offers are presented as selectable packs inside the order
+              form below — no duplicate summary block here. */}
 
           {description ? (
             <p className="whitespace-pre-line text-[15px] leading-relaxed text-foreground/70" dir={isAr ? "rtl" : "ltr"}>

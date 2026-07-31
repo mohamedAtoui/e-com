@@ -67,6 +67,7 @@ export interface StorefrontDict {
     backHome: string;
     orderCta: string;
     save: string;
+    freeDelivery: string;
     trust: { cod: string; delivery: string; guarantee: string; quality: string };
   };
 }
@@ -156,6 +157,7 @@ export const DICT: Record<Lang, StorefrontDict> = {
       backHome: "Continuer mes achats",
       orderCta: "Commander maintenant",
       save: "Économisez",
+      freeDelivery: "Livraison gratuite",
       trust: {
         cod: "Paiement à la livraison",
         delivery: "Livraison 58 wilayas",
@@ -248,6 +250,7 @@ export const DICT: Record<Lang, StorefrontDict> = {
       backHome: "مواصلة التسوّق",
       orderCta: "اطلب الآن",
       save: "وفّر",
+      freeDelivery: "توصيل مجاني",
       trust: {
         cod: "الدفع عند الاستلام",
         delivery: "توصيل لـ 58 ولاية",

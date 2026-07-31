@@ -52,6 +52,8 @@ export const productSchema = z
         z.object({
           qty: z.coerce.number().int().min(2, "Quantité ≥ 2").max(99),
           price: z.coerce.number().int().min(0),
+          // Waives the delivery fee when this bundle quantity is ordered.
+          free_delivery: z.boolean().default(false),
         }),
       )
       .default([]),

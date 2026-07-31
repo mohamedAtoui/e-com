@@ -185,9 +185,10 @@ export function ProductForm({ initial }: { initial?: ProductRow }) {
             <Label>Offres / Promos</Label>
             <p className="text-xs text-muted-foreground">
               Prix total par quantité. Ex : 2 pièces = 3500 DA, 3 pièces = 5000 DA.
+              Cochez « Livraison gratuite » pour offrir la livraison à cette quantité.
             </p>
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={() => appendOffer({ qty: 2, price: 0 })}>
+          <Button type="button" variant="outline" size="sm" onClick={() => appendOffer({ qty: 2, price: 0, free_delivery: false })}>
             + Ajouter une offre
           </Button>
         </div>
@@ -219,6 +220,10 @@ export function ProductForm({ initial }: { initial?: ProductRow }) {
                 {...register(`offers.${i}.price` as const)}
               />
             </div>
+            <label className="flex h-9 cursor-pointer items-center gap-2 text-xs font-medium">
+              <input type="checkbox" {...register(`offers.${i}.free_delivery` as const)} />
+              Livraison gratuite
+            </label>
             <Button type="button" variant="outline" size="sm" onClick={() => removeOffer(i)}>
               Supprimer
             </Button>

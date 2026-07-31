@@ -123,9 +123,12 @@ export function CheckoutForm({ productId, price, offers = [], deliveryFees }: Ch
   }, [customerName, customerPhone, wilayaCode, communeId, method, quantity, productId]);
 
   const fee = deliveryFees[wilayaCode];
-  const deliveryFee =
+  const baseDeliveryFee =
     fee && method === "home" ? fee.home_fee : fee && method === "stopdesk" ? fee.stopdesk_fee : 0;
   const { subtotal, unitPrice, offer } = computeLine(price, offers, quantity);
+  // A bundle can waive delivery; create_order re-applies this server-side.
+  const freeDelivery = offer?.free_delivery === true;
+  const deliveryFee = freeDelivery ? 0 : baseDeliveryFee;
   const total = subtotal + deliveryFee;
   // Regular (non-promo) subtotal, and how much the active promo saves.
   const regularSubtotal = price * quantity;
@@ -234,6 +237,7 @@ export function CheckoutForm({ productId, price, offers = [], deliveryFees }: Ch
                   each={p.promoEach.replace("{n}", formatDZD(each))}
                   save={save > 0 ? p.promoSave.replace("{n}", formatDZD(save)) : undefined}
                   best={o.qty === bestQty ? p.promoBest : undefined}
+                  perk={o.free_delivery ? p.freeDelivery : undefined}
                 />
               );
             })}
@@ -287,7 +291,21 @@ export function CheckoutForm({ productId, price, offers = [], deliveryFees }: Ch
             <dd className="font-semibold">− {formatDZD(saved)}</dd>
           </div>
         )}
-        <Row label={p.delivery} value={wilayaCode ? formatDZD(deliveryFee) : "—"} />
+        {freeDelivery ? (
+          <div className="flex justify-between">
+            <dt className="text-foreground/60">{p.delivery}</dt>
+            <dd className="flex items-center gap-2 font-semibold text-[#7BA05B]">
+              {wilayaCode && baseDeliveryFee > 0 && (
+                <span className="font-normal text-foreground/40 line-through">
+                  {formatDZD(baseDeliveryFee)}
+                </span>
+              )}
+              {p.freeDelivery}
+            </dd>
+          </div>
+        ) : (
+          <Row label={p.delivery} value={wilayaCode ? formatDZD(deliveryFee) : "—"} />
+        )}
         <Row label={p.total} value={formatDZD(total)} strong />
       </dl>
 
@@ -308,6 +326,7 @@ function PackCard({
   each,
   save,
   best,
+  perk,
 }: {
   selected: boolean;
   onClick: () => void;
@@ -316,6 +335,7 @@ function PackCard({
   each?: string;
   save?: string;
   best?: string;
+  perk?: string;
 }) {
   return (
     <button
@@ -337,6 +357,11 @@ function PackCard({
       <span className="font-serif text-base font-semibold">{price}</span>
       {each && <span className="text-[11px] text-foreground/55">{each}</span>}
       {save && <span className="mt-0.5 text-[11px] font-semibold text-[#7BA05B]">{save}</span>}
+      {perk && (
+        <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#7BA05B]/12 px-2 py-0.5 text-[10px] font-semibold text-[#5f7f45]">
+          🚚 {perk}
+        </span>
+      )}
     </button>
   );
 }

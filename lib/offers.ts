@@ -14,23 +14,29 @@ export interface Offer {
   qty: number;
   /** Total price in DZD for the whole bundle. */
   price: number;
+  /** When true, delivery is offered (free) at this bundle quantity. */
+  free_delivery?: boolean;
 }
 
 /** Validate, sort, and dedupe raw offer data coming from the DB or a form. */
 export function normalizeOffers(raw: unknown): Offer[] {
   if (!Array.isArray(raw)) return [];
-  const byQty = new Map<number, number>();
+  const byQty = new Map<number, Offer>();
   for (const o of raw) {
     if (!o || typeof o !== "object") continue;
     const qty = Math.trunc(Number((o as Offer).qty));
     const price = Math.trunc(Number((o as Offer).price));
     if (!Number.isFinite(qty) || qty < 2 || qty > 99) continue;
     if (!Number.isFinite(price) || price < 0) continue;
-    byQty.set(qty, price); // last write wins on duplicate qty
+    // last write wins on duplicate qty
+    byQty.set(qty, { qty, price, free_delivery: (o as Offer).free_delivery === true });
   }
-  return [...byQty.entries()]
-    .map(([qty, price]) => ({ qty, price }))
-    .sort((a, b) => a.qty - b.qty);
+  return [...byQty.values()].sort((a, b) => a.qty - b.qty);
+}
+
+/** Whether the bundle matching `qty` offers free delivery. */
+export function hasFreeDelivery(offers: Offer[], qty: number): boolean {
+  return findOffer(offers, qty)?.free_delivery === true;
 }
 
 /** The offer that applies to an exact quantity, if any. */
