@@ -56,7 +56,7 @@ export type ProductRow = Timestamps & {
   is_active: boolean;
   category: ProductCategory;
   images: string[];
-  offers: { qty: number; price: number }[];
+  offers: { qty: number; price: number; free_delivery?: boolean }[];
   description_blocks: ContentBlock[];
 };
 
@@ -159,6 +159,20 @@ export type StockMovementRow = {
   created_at: string;
 };
 
+export type ProductReviewRow = {
+  id: string;
+  product_id: string;
+  author_name: string;
+  /** 1–5 */
+  rating: number;
+  comment_fr: string | null;
+  comment_ar: string | null;
+  image_path: string | null;
+  is_published: boolean;
+  sort_order: number;
+  created_at: string;
+};
+
 export type OrderStatusRow = {
   key: string;
   label_fr: string;
@@ -213,7 +227,14 @@ export type OrderSummary = {
   wilaya_code: number;
   commune_id: number;
   created_at: string;
-  items: { name_fr: string | null; name_ar: string | null; quantity: number; unit_price: number }[];
+  items: {
+    /** Present once migration 0011 is applied; used for Meta Lead attribution. */
+    product_id?: string;
+    name_fr: string | null;
+    name_ar: string | null;
+    quantity: number;
+    unit_price: number;
+  }[];
 } | null;
 
 export type Database = {
@@ -231,6 +252,7 @@ export type Database = {
       checkout_leads: Table<CheckoutLeadRow>;
       order_statuses: Table<OrderStatusRow>;
       roles: Table<RoleRow>;
+      product_reviews: Table<ProductReviewRow>;
     };
     Views: Record<string, never>;
     Functions: {

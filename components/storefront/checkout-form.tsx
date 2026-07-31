@@ -1,6 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Phone, User } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -14,6 +16,7 @@ import { saveCheckoutLead } from "@/actions/leads";
 import { communesForWilaya } from "@/actions/geo";
 import { WILAYAS } from "@/lib/wilayas";
 import type { Commune } from "@/lib/algeria-data";
+import { productImageUrl } from "@/lib/images";
 import { buildEventPayload } from "@/lib/meta/events";
 import { pixel } from "@/lib/meta/pixel";
 import { formatDZD } from "@/lib/money";
@@ -33,12 +36,22 @@ interface CheckoutFormProps {
   price: number;
   offers?: Offer[];
   deliveryFees: Record<number, FeeInfo>;
+  /** Cover image path + name, used by the order summary and the sticky bar. */
+  image?: string;
+  productName?: string;
 }
 
 const selectClass =
   "h-11 w-full rounded-xl border border-input bg-transparent px-3 text-sm outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40 disabled:opacity-50";
 
-export function CheckoutForm({ productId, price, offers = [], deliveryFees }: CheckoutFormProps) {
+export function CheckoutForm({
+  productId,
+  price,
+  offers = [],
+  deliveryFees,
+  image,
+  productName,
+}: CheckoutFormProps) {
   const { t, lang } = useLang();
   const p = t.product;
   const isAr = lang === "ar";
@@ -141,6 +154,12 @@ export function CheckoutForm({ productId, price, offers = [], deliveryFees }: Ch
   const setQty = (n: number) =>
     setValue("quantity", Math.min(99, Math.max(1, n)), { shouldValidate: true });
 
+  /** Selecting a pack is the closest thing to "add to cart" in a COD funnel. */
+  function pickQty(n: number, unit: number) {
+    setQty(n);
+    pixel.addToCart(buildEventPayload([{ product_id: productId, quantity: n, unit_price: unit }]));
+  }
+
   function trackCheckout() {
     if (checkoutTracked.current) return;
     checkoutTracked.current = true;
@@ -160,179 +179,253 @@ export function CheckoutForm({ productId, price, offers = [], deliveryFees }: Ch
   }
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      onFocus={trackCheckout}
-      className="space-y-4 rounded-[20px] border border-foreground/10 bg-white/60 p-5"
-    >
-      <h3 className="font-serif text-xl font-medium">{p.order}</h3>
+    <>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        onFocus={trackCheckout}
+        className="space-y-5 rounded-[20px] border border-foreground/10 bg-white/60 p-5"
+      >
+        <h3 className="font-serif text-xl font-medium">{p.order}</h3>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="customer_name">{p.name}</Label>
-        <Input id="customer_name" {...register("customer_name")} className="h-11 rounded-xl" />
-        {errors.customer_name && <p className="text-xs text-destructive">{errors.customer_name.message}</p>}
-      </div>
+        {/* 1 — Choose the pack first: the offer is the reason to buy more. */}
+        {offers.length > 0 && (
+          <div className="space-y-2">
+            <Label>{p.promos}</Label>
+            <div className="space-y-2.5">
+              <OfferRow
+                selected={!offer}
+                onClick={() => pickQty(1, price)}
+                title={`1 ${t.colPage.countOne}`}
+                total={formatDZD(price)}
+              />
+              {offers.map((o) => {
+                const regular = price * o.qty;
+                const save = regular - o.price;
+                const pct = regular > 0 ? Math.round((1 - o.price / regular) * 100) : 0;
+                return (
+                  <OfferRow
+                    key={o.qty}
+                    selected={quantity === o.qty}
+                    onClick={() => pickQty(o.qty, Math.round(o.price / o.qty))}
+                    title={
+                      pct > 0
+                        ? p.buyNGet.replace("{n}", String(o.qty)).replace("{p}", String(pct))
+                        : `${o.qty} ${p.promoUnit}`
+                    }
+                    total={formatDZD(o.price)}
+                    regular={save > 0 ? formatDZD(regular) : undefined}
+                    save={save > 0 ? formatDZD(save) : undefined}
+                    best={o.qty === bestQty ? p.promoBest : undefined}
+                    perk={o.free_delivery ? p.freeDelivery : undefined}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-      <div className="space-y-1.5">
-        <Label htmlFor="customer_phone">{p.phone}</Label>
-        <Input id="customer_phone" inputMode="tel" {...register("customer_phone")} placeholder="0X XX XX XX XX" className="h-11 rounded-xl" />
-        {errors.customer_phone && <p className="text-xs text-destructive">{errors.customer_phone.message}</p>}
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
+        {/* 2 — Quantity: primary when there are no packs, secondary otherwise. */}
         <div className="space-y-1.5">
-          <Label htmlFor="wilaya_code">{p.wilaya}</Label>
-          <select id="wilaya_code" className={selectClass} {...register("wilaya_code", { onChange: () => setValue("commune_id", "" as unknown as number) })}>
-            <option value="">{p.choose}</option>
-            {WILAYAS.map((w) => (
-              <option key={w.code} value={w.code}>
-                {w.code} - {isAr ? w.name_ar : w.name_fr}
-              </option>
-            ))}
-          </select>
-          {errors.wilaya_code && <p className="text-xs text-destructive">{p.wilaya}</p>}
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="commune_id">{p.commune}</Label>
-          <select id="commune_id" className={selectClass} disabled={!wilayaCode} {...register("commune_id")}>
-            <option value="">{p.choose}</option>
-            {communes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {isAr ? c.name_ar : c.name_fr}
-              </option>
-            ))}
-          </select>
-          {errors.commune_id && <p className="text-xs text-destructive">{p.commune}</p>}
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label>{p.deliveryMode}</Label>
-        <div className="grid grid-cols-2 gap-3">
-          <DeliveryOption label={p.home} sub={p.homeSub} fee={fee?.home_fee} selected={method === "home"} disabled={fee ? !fee.home_available : false} value="home" register={register("delivery_method")} />
-          <DeliveryOption label={p.stopdesk} sub={p.stopdeskSub} fee={fee?.stopdesk_fee} selected={method === "stopdesk"} disabled={fee ? !fee.stopdesk_available : false} value="stopdesk" register={register("delivery_method")} />
-        </div>
-      </div>
-
-      {offers.length > 0 && (
-        <div className="space-y-2">
-          <Label>{p.promos}</Label>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            <PackCard
-              selected={!offer}
-              onClick={() => setQty(1)}
-              qtyLabel={`1 ${p.promoUnit}`}
-              price={formatDZD(price)}
+          <Label htmlFor="quantity" className={offers.length > 0 ? "text-xs text-foreground/60" : undefined}>
+            {offers.length > 0 ? p.otherQty : p.quantity}
+          </Label>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-label="-"
+              onClick={() => setQty(quantity - 1)}
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-input text-lg transition hover:border-foreground/40 disabled:opacity-40"
+              disabled={quantity <= 1}
+            >
+              −
+            </button>
+            <Input
+              id="quantity"
+              type="number"
+              min={1}
+              max={99}
+              className="h-11 w-16 rounded-xl text-center"
+              {...register("quantity")}
             />
-            {offers.map((o) => {
-              const each = Math.round(o.price / o.qty);
-              const save = price * o.qty - o.price;
-              return (
-                <PackCard
-                  key={o.qty}
-                  selected={quantity === o.qty}
-                  onClick={() => setQty(o.qty)}
-                  qtyLabel={`${o.qty} ${p.promoUnit}`}
-                  price={formatDZD(o.price)}
-                  each={p.promoEach.replace("{n}", formatDZD(each))}
-                  save={save > 0 ? p.promoSave.replace("{n}", formatDZD(save)) : undefined}
-                  best={o.qty === bestQty ? p.promoBest : undefined}
-                  perk={o.free_delivery ? p.freeDelivery : undefined}
-                />
-              );
-            })}
+            <button
+              type="button"
+              aria-label="+"
+              onClick={() => setQty(quantity + 1)}
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-input text-lg transition hover:border-foreground/40 disabled:opacity-40"
+              disabled={quantity >= 99}
+            >
+              +
+            </button>
           </div>
         </div>
-      )}
 
-      <div className="space-y-1.5">
-        <Label htmlFor="quantity">{p.quantity}</Label>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            aria-label="-"
-            onClick={() => setQty(quantity - 1)}
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-input text-lg transition hover:border-foreground/40 disabled:opacity-40"
-            disabled={quantity <= 1}
-          >
-            −
-          </button>
-          <Input
-            id="quantity"
-            type="number"
-            min={1}
-            max={99}
-            className="h-11 w-16 rounded-xl text-center"
-            {...register("quantity")}
-          />
-          <button
-            type="button"
-            aria-label="+"
-            onClick={() => setQty(quantity + 1)}
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-input text-lg transition hover:border-foreground/40 disabled:opacity-40"
-            disabled={quantity >= 99}
-          >
-            +
-          </button>
-        </div>
-      </div>
-
-      <dl className="space-y-1 border-t border-foreground/10 pt-3 text-sm">
-        <div className="flex justify-between">
-          <dt className="text-foreground/60">{p.subtotal}</dt>
-          <dd className="flex items-center gap-2">
-            {saved > 0 && <span className="text-foreground/40 line-through">{formatDZD(regularSubtotal)}</span>}
-            <span>{formatDZD(subtotal)}</span>
-          </dd>
-        </div>
-        {saved > 0 && (
-          <div className="flex justify-between text-[#7BA05B]">
-            <dt className="font-medium">{p.promos}</dt>
-            <dd className="font-semibold">− {formatDZD(saved)}</dd>
+        {/* 3 — Who and where. */}
+        <div className="space-y-1.5">
+          <Label htmlFor="customer_name">{p.name}</Label>
+          <div className="relative">
+            <User className="pointer-events-none absolute top-1/2 size-4 -translate-y-1/2 text-foreground/35 [inset-inline-start:0.75rem]" />
+            <Input id="customer_name" {...register("customer_name")} className="h-11 rounded-xl ps-10" />
           </div>
-        )}
-        {freeDelivery ? (
-          <div className="flex justify-between">
-            <dt className="text-foreground/60">{p.delivery}</dt>
-            <dd className="flex items-center gap-2 font-semibold text-[#7BA05B]">
-              {wilayaCode && baseDeliveryFee > 0 && (
-                <span className="font-normal text-foreground/40 line-through">
-                  {formatDZD(baseDeliveryFee)}
-                </span>
+          {errors.customer_name && <p className="text-xs text-destructive">{errors.customer_name.message}</p>}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="customer_phone">{p.phone}</Label>
+          <div className="relative">
+            <Phone className="pointer-events-none absolute top-1/2 size-4 -translate-y-1/2 text-foreground/35 [inset-inline-start:0.75rem]" />
+            <Input
+              id="customer_phone"
+              inputMode="tel"
+              {...register("customer_phone")}
+              placeholder="0X XX XX XX XX"
+              className="h-11 rounded-xl ps-10"
+            />
+          </div>
+          {errors.customer_phone && <p className="text-xs text-destructive">{errors.customer_phone.message}</p>}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="wilaya_code">{p.wilaya}</Label>
+            <select
+              id="wilaya_code"
+              className={selectClass}
+              {...register("wilaya_code", { onChange: () => setValue("commune_id", "" as unknown as number) })}
+            >
+              <option value="">{p.choose}</option>
+              {WILAYAS.map((w) => (
+                <option key={w.code} value={w.code}>
+                  {w.code} - {isAr ? w.name_ar : w.name_fr}
+                </option>
+              ))}
+            </select>
+            {errors.wilaya_code && <p className="text-xs text-destructive">{p.required}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="commune_id">{p.commune}</Label>
+            <select id="commune_id" className={selectClass} disabled={!wilayaCode} {...register("commune_id")}>
+              <option value="">{p.choose}</option>
+              {communes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {isAr ? c.name_ar : c.name_fr}
+                </option>
+              ))}
+            </select>
+            {errors.commune_id && <p className="text-xs text-destructive">{p.required}</p>}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>{p.deliveryMode}</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <DeliveryOption label={p.home} sub={p.homeSub} fee={fee?.home_fee} selected={method === "home"} disabled={fee ? !fee.home_available : false} value="home" register={register("delivery_method")} />
+            <DeliveryOption label={p.stopdesk} sub={p.stopdeskSub} fee={fee?.stopdesk_fee} selected={method === "stopdesk"} disabled={fee ? !fee.stopdesk_available : false} value="stopdesk" register={register("delivery_method")} />
+          </div>
+        </div>
+
+        {/* 4 — Recap right before the CTA. */}
+        <div className="rounded-2xl bg-[#F4EEE3]/60 p-4">
+          <p className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-foreground/55">{p.summary}</p>
+          {(image || productName) && (
+            <div className="mb-3 flex items-center gap-3">
+              {image && (
+                <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-white">
+                  <Image src={productImageUrl(image)} alt={productName ?? ""} fill sizes="48px" className="object-contain p-1" />
+                </div>
               )}
-              {p.freeDelivery}
-            </dd>
-          </div>
-        ) : (
-          <Row label={p.delivery} value={wilayaCode ? formatDZD(deliveryFee) : "—"} />
-        )}
-        <Row label={p.total} value={formatDZD(total)} strong />
-      </dl>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{productName}</p>
+                <p className="text-xs text-foreground/55">
+                  {quantity} × {formatDZD(unitPrice)}
+                </p>
+              </div>
+            </div>
+          )}
+          <dl className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-foreground/60">{p.subtotal}</dt>
+              <dd className="flex items-center gap-2">
+                {saved > 0 && <span className="text-foreground/40 line-through">{formatDZD(regularSubtotal)}</span>}
+                <span>{formatDZD(subtotal)}</span>
+              </dd>
+            </div>
+            {saved > 0 && (
+              <div className="flex justify-between text-[#3F8F2B]">
+                <dt className="font-medium">{p.promos}</dt>
+                <dd className="font-semibold">− {formatDZD(saved)}</dd>
+              </div>
+            )}
+            {freeDelivery ? (
+              <div className="flex justify-between">
+                <dt className="text-foreground/60">{p.delivery}</dt>
+                <dd className="flex items-center gap-2 font-semibold text-[#3F8F2B]">
+                  {wilayaCode && baseDeliveryFee > 0 && (
+                    <span className="font-normal text-foreground/40 line-through">{formatDZD(baseDeliveryFee)}</span>
+                  )}
+                  {p.freeDelivery}
+                </dd>
+              </div>
+            ) : (
+              <Row label={p.delivery} value={wilayaCode ? formatDZD(deliveryFee) : "—"} />
+            )}
+            <div className="flex justify-between border-t border-foreground/10 pt-2 text-base font-semibold">
+              <dt>{p.total}</dt>
+              <dd>{formatDZD(total)}</dd>
+            </div>
+          </dl>
+        </div>
 
-      {serverError && <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">{serverError}</p>}
+        {serverError && <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">{serverError}</p>}
 
-      <Button type="submit" size="lg" disabled={isSubmitting} className="w-full rounded-full bg-[#2B2724] py-6 text-[15.5px] font-semibold text-[#FAF7F2] transition-shadow hover:shadow-[0_16px_40px_-12px_rgba(244,184,96,.95)]">
-        {isSubmitting ? p.submitting : p.submit}
-      </Button>
-    </form>
+        <div className="space-y-2">
+          <Button
+            type="submit"
+            size="lg"
+            disabled={isSubmitting}
+            className="w-full rounded-full bg-[#3F8F2B] py-6 text-[16px] font-bold text-white shadow-[0_10px_28px_-10px_rgba(63,143,43,.8)] transition hover:brightness-110"
+          >
+            {isSubmitting ? p.submitting : `${p.submit} · ${formatDZD(total)}`}
+          </Button>
+          <p className="text-center text-xs text-foreground/55">{p.codReassure}</p>
+        </div>
+      </form>
+
+      {/* Sticky mobile bar — lives here so it always shows the live total. */}
+      <div className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-between gap-3 border-t border-foreground/10 bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
+        <div className="flex flex-col leading-tight">
+          <span className="font-serif text-xl font-semibold">{formatDZD(total)}</span>
+          {saved > 0 && (
+            <span className="text-[12px] text-foreground/45 line-through">{formatDZD(regularSubtotal)}</span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => document.getElementById("order")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+          className="flex-1 rounded-full bg-[#3F8F2B] px-6 py-3.5 text-[15px] font-bold text-white shadow-[0_10px_28px_-10px_rgba(63,143,43,.8)] transition hover:brightness-110"
+        >
+          {p.orderCta}
+        </button>
+      </div>
+    </>
   );
 }
 
-function PackCard({
+/** One full-width bundle tier: benefit headline + price, savings badge. */
+function OfferRow({
   selected,
   onClick,
-  qtyLabel,
-  price,
-  each,
+  title,
+  total,
+  regular,
   save,
   best,
   perk,
 }: {
   selected: boolean;
   onClick: () => void;
-  qtyLabel: string;
-  price: string;
-  each?: string;
+  title: string;
+  total: string;
+  regular?: string;
   save?: string;
   best?: string;
   perk?: string;
@@ -342,24 +435,38 @@ function PackCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "relative flex flex-col rounded-xl border p-3 text-start transition",
-        selected
-          ? "border-[#2B2724] bg-[#F4B860]/10 ring-1 ring-[#F4B860]"
-          : "border-input hover:border-foreground/30",
+        "relative flex w-full items-center gap-3 rounded-xl border p-3 text-start transition",
+        selected ? "border-[#3F8F2B] bg-[#3F8F2B]/8 ring-1 ring-[#3F8F2B]" : "border-input hover:border-foreground/30",
       )}
     >
-      {best && (
-        <span className="absolute -top-2 right-2 rounded-full bg-[#2B2724] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[#F4B860]">
-          {best}
+      <span
+        className={cn(
+          "flex size-5 shrink-0 items-center justify-center rounded-full border-2",
+          selected ? "border-[#3F8F2B]" : "border-foreground/30",
+        )}
+      >
+        {selected && <span className="size-2.5 rounded-full bg-[#3F8F2B]" />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[14.5px] font-semibold leading-tight">{title}</span>
+        {perk && (
+          <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#3F8F2B]/12 px-2 py-0.5 text-[10.5px] font-semibold text-[#3F8F2B]">
+            🚚 {perk}
+          </span>
+        )}
+      </span>
+      <span className="shrink-0 text-end">
+        <span className="block font-serif text-[17px] font-semibold">{total}</span>
+        {regular && <span className="block text-[12px] text-foreground/40 line-through">{regular}</span>}
+      </span>
+      {save && (
+        <span className="absolute -top-2 rounded-full bg-[#3F8F2B] px-2 py-0.5 text-[10px] font-bold text-white [inset-inline-end:0.75rem]">
+          − {save}
         </span>
       )}
-      <span className="text-sm font-semibold">{qtyLabel}</span>
-      <span className="font-serif text-base font-semibold">{price}</span>
-      {each && <span className="text-[11px] text-foreground/55">{each}</span>}
-      {save && <span className="mt-0.5 text-[11px] font-semibold text-[#7BA05B]">{save}</span>}
-      {perk && (
-        <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#7BA05B]/12 px-2 py-0.5 text-[10px] font-semibold text-[#5f7f45]">
-          🚚 {perk}
+      {best && (
+        <span className="absolute -top-2 rounded-full bg-[#2B2724] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[#F4B860] [inset-inline-start:0.75rem]">
+          {best}
         </span>
       )}
     </button>
@@ -396,7 +503,7 @@ function DeliveryOption({
     <label
       className={cn(
         "flex cursor-pointer flex-col rounded-xl border p-3 text-sm transition",
-        selected ? "border-[#2B2724] ring-1 ring-[#F4B860]" : "border-input",
+        selected ? "border-[#3F8F2B] ring-1 ring-[#3F8F2B]" : "border-input",
         disabled && "pointer-events-none opacity-40",
       )}
     >

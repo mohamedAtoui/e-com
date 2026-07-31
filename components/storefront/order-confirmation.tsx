@@ -28,11 +28,23 @@ export function OrderConfirmation({
   useEffect(() => {
     if (tracked.current) return;
     tracked.current = true;
+    // product_id is only present once migration 0011 is applied; fall back to
+    // an unattributed (but still valued) Lead before that.
+    const withIds = summary.items.filter((i) => i.product_id);
     pixel.lead(
-      { content_ids: [], contents: [], value: summary.subtotal, currency: META_CURRENCY },
+      {
+        content_ids: withIds.map((i) => i.product_id!),
+        contents: withIds.map((i) => ({
+          id: i.product_id!,
+          quantity: i.quantity,
+          item_price: i.unit_price,
+        })),
+        value: summary.subtotal,
+        currency: META_CURRENCY,
+      },
       eventId,
     );
-  }, [eventId, summary.subtotal]);
+  }, [eventId, summary.subtotal, summary.items]);
 
   return (
     <div className="mx-auto max-w-xl px-4 py-16 text-center">

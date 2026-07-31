@@ -68,6 +68,18 @@ export interface StorefrontDict {
     orderCta: string;
     save: string;
     freeDelivery: string;
+    /** "Achetez {n} et obtenez −{p}%" */
+    buyNGet: string;
+    codReassure: string;
+    otherQty: string;
+    summary: string;
+    reviews: string;
+    /** "{n} avis" */
+    reviewsCount: string;
+    noReviews: string;
+    moreProducts: string;
+    verifiedBuyer: string;
+    required: string;
     trust: { cod: string; delivery: string; guarantee: string; quality: string };
   };
 }
@@ -158,6 +170,16 @@ export const DICT: Record<Lang, StorefrontDict> = {
       orderCta: "Commander maintenant",
       save: "Économisez",
       freeDelivery: "Livraison gratuite",
+      buyNGet: "Achetez {n} et obtenez −{p}%",
+      codReassure: "Vous ne payez qu'à la réception.",
+      otherQty: "Autre quantité",
+      summary: "Récapitulatif",
+      reviews: "Avis clients",
+      reviewsCount: "{n} avis",
+      noReviews: "Aucun avis pour le moment.",
+      moreProducts: "Plus de produits",
+      verifiedBuyer: "Achat vérifié",
+      required: "Champ requis",
       trust: {
         cod: "Paiement à la livraison",
         delivery: "Livraison 58 wilayas",
@@ -251,6 +273,16 @@ export const DICT: Record<Lang, StorefrontDict> = {
       orderCta: "اطلب الآن",
       save: "وفّر",
       freeDelivery: "توصيل مجاني",
+      buyNGet: "اشترِ {n} واحصل على −{p}%",
+      codReassure: "لا تدفع إلا عند الاستلام.",
+      otherQty: "كمية أخرى",
+      summary: "ملخّص الطلب",
+      reviews: "آراء العملاء",
+      reviewsCount: "{n} تقييم",
+      noReviews: "لا توجد تقييمات بعد.",
+      moreProducts: "منتجات أخرى",
+      verifiedBuyer: "شراء موثّق",
+      required: "حقل مطلوب",
       trust: {
         cod: "الدفع عند الاستلام",
         delivery: "توصيل لـ 58 ولاية",

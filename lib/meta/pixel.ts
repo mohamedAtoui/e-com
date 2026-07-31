@@ -55,6 +55,10 @@ export const pixel = {
   viewContent(payload: MetaEventPayload) {
     track("ViewContent", payload);
   },
+  /** Picking a bundle/quantity — the closest signal to "add to cart" in a COD funnel. */
+  addToCart(payload: MetaEventPayload) {
+    track("AddToCart", payload);
+  },
   initiateCheckout(payload: MetaEventPayload) {
     track("InitiateCheckout", payload);
   },
