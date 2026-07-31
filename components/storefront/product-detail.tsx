@@ -57,7 +57,7 @@ export function ProductDetail({
   ];
 
   return (
-    <div className="mx-auto max-w-[720px] px-[clamp(18px,5vw,32px)] pb-28 pt-6 lg:pb-16">
+    <div className="mx-auto max-w-[720px] px-[clamp(18px,5vw,32px)] pb-28 pt-6 lg:max-w-[1180px] lg:pb-16">
       <Link
         href="/collection"
         className="mb-5 inline-flex items-center gap-2 text-[13.5px] font-semibold text-foreground/55 transition-colors hover:text-foreground"
@@ -66,11 +66,16 @@ export function ProductDetail({
         {t.colPage.back}
       </Link>
 
-      {/* 1 — The product itself */}
-      <ProductGallery images={product.images ?? []} alt={title} />
+      {/* Buy zone: stacked on phones (gallery → info → form = form-first),
+          two columns from lg with the gallery pinned beside the buy column. */}
+      <div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-12">
+        {/* 1 — The product itself */}
+        <div className="lg:sticky lg:top-24">
+          <ProductGallery images={product.images ?? []} alt={title} />
+        </div>
 
-      {/* 2 — Identity + proof + price */}
-      <div className="mt-6 space-y-4">
+        {/* 2 — Identity + proof + price + the order form */}
+        <div className="space-y-4">
         <div>
           <h1
             className="m-0 font-medium"
@@ -111,44 +116,45 @@ export function ProductDetail({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-          {trust.map((b) => {
-            const Icon = b.icon;
-            return (
-              <div
-                key={b.label}
-                className="flex items-center gap-2 rounded-xl border border-foreground/10 bg-white/50 px-3 py-2.5 text-[12.5px] font-medium leading-tight"
-              >
-                <Icon className="size-4 shrink-0 text-primary" />
-                <span>{b.label}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 3 — Buy. The form sits high on the page, right after price + proof. */}
-      <div id="order" className="mt-6 scroll-mt-24">
-        {available > 0 ? (
-          <CheckoutForm
-            productId={product.id}
-            price={product.price}
-            offers={offers}
-            deliveryFees={feeMap}
-            image={product.images?.[0]}
-            productName={title}
-          />
-        ) : (
-          <div className="rounded-[20px] border border-foreground/10 bg-muted/40 p-5 text-center text-foreground/60">
-            {t.product.outOfStockMsg}
+          <div className="grid grid-cols-2 gap-2.5">
+            {trust.map((b) => {
+              const Icon = b.icon;
+              return (
+                <div
+                  key={b.label}
+                  className="flex items-center gap-2 rounded-xl border border-foreground/10 bg-white/50 px-3 py-2.5 text-[12.5px] font-medium leading-tight"
+                >
+                  <Icon className="size-4 shrink-0 text-primary" />
+                  <span>{b.label}</span>
+                </div>
+              );
+            })}
           </div>
-        )}
+
+          {/* 3 — Buy. Directly under price + proof on every screen. */}
+          <div id="order" className="scroll-mt-24 pt-2">
+            {available > 0 ? (
+              <CheckoutForm
+                productId={product.id}
+                price={product.price}
+                offers={offers}
+                deliveryFees={feeMap}
+                image={product.images?.[0]}
+                productName={title}
+              />
+            ) : (
+              <div className="rounded-[20px] border border-foreground/10 bg-muted/40 p-5 text-center text-foreground/60">
+                {t.product.outOfStockMsg}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* 4 — Convince: description, then A+ blocks, then proof */}
       {description ? (
         <p
-          className="mt-8 whitespace-pre-line text-[15px] leading-relaxed text-foreground/70"
+          className="mt-10 max-w-[70ch] whitespace-pre-line text-[15px] leading-relaxed text-foreground/70"
           dir={isAr ? "rtl" : "ltr"}
         >
           {description}
@@ -163,7 +169,7 @@ export function ProductDetail({
       {related.length > 0 && (
         <section className="pt-12">
           <h2 className="m-0 mb-5 font-serif text-[clamp(22px,3vw,30px)] font-medium">{t.product.moreProducts}</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {related.map((r) => (
               <ProductCard key={r.slug} product={r} />
             ))}
