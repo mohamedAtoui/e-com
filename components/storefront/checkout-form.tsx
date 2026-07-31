@@ -390,18 +390,12 @@ export function CheckoutForm({
         </div>
       </form>
 
-      {/* Sticky mobile bar — lives here so it always shows the live total. */}
-      <div className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-between gap-3 border-t border-foreground/10 bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
-        <div className="flex flex-col leading-tight">
-          <span className="font-serif text-xl font-semibold">{formatDZD(total)}</span>
-          {saved > 0 && (
-            <span className="text-[12px] text-foreground/45 line-through">{formatDZD(regularSubtotal)}</span>
-          )}
-        </div>
+      {/* Sticky mobile bar — one big, unmistakable call to action. */}
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-foreground/10 bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
         <button
           type="button"
           onClick={() => document.getElementById("order")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-          className="flex-1 rounded-full bg-[#3F8F2B] px-6 py-3.5 text-[15px] font-bold text-white shadow-[0_10px_28px_-10px_rgba(63,143,43,.8)] transition hover:brightness-110"
+          className="w-full rounded-full bg-[#3F8F2B] px-6 py-4 text-center text-[17px] font-bold text-white shadow-[0_10px_28px_-10px_rgba(63,143,43,.8)] transition hover:brightness-110"
         >
           {p.orderCta}
         </button>
