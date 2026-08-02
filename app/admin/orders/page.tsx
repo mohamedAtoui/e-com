@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { OrderStatusControl } from "@/components/admin/order-status-control";
+import { OrderTrashControl } from "@/components/admin/order-trash-control";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -31,10 +32,11 @@ type OrderWithItems = OrderRow & { order_items: OrderItemLite[] };
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; view?: string }>;
 }) {
   await guardPage("orders");
-  const { status } = await searchParams;
+  const { status, view } = await searchParams;
+  const trashView = view === "trash";
   const supabase = await createClient();
 
   const { data: statusRows } = await supabase
@@ -42,7 +44,7 @@ export default async function OrdersPage({
     .select("*")
     .order("sort_order");
   const statuses = (statusRows ?? []) as OrderStatusRow[];
-  const activeStatus = statuses.some((s) => s.key === status) ? status : undefined;
+  const activeStatus = !trashView && statuses.some((s) => s.key === status) ? status : undefined;
 
   let query = supabase
     .from("orders")
@@ -50,18 +52,28 @@ export default async function OrdersPage({
       "*, order_items(product_id, product_name_fr, product_name_ar, quantity)",
     )
     .order("created_at", { ascending: false });
+  // A trashed order is invisible in every normal view — that is the whole point
+  // of the trash — and only ever listed under "Corbeille".
+  query = trashView ? query.not("deleted_at", "is", null) : query.is("deleted_at", null);
   if (activeStatus) query = query.eq("status", activeStatus);
 
   const { data } = await query.returns<OrderWithItems[]>();
   const orders = data ?? [];
 
-  // status counts for the filter bar
-  const { data: allStatuses } = await supabase.from("orders").select("status");
+  // status counts for the filter bar (live orders only) + the trash count
+  const { data: allStatuses } = await supabase
+    .from("orders")
+    .select("status")
+    .is("deleted_at", null);
   const counts = (allStatuses ?? []).reduce<Record<string, number>>((acc, r) => {
     acc[r.status] = (acc[r.status] ?? 0) + 1;
     return acc;
   }, {});
   const totalCount = allStatuses?.length ?? 0;
+  const { count: trashCount } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .not("deleted_at", "is", null);
 
   // group orders by their (first) product
   const groups = new Map<
@@ -84,13 +96,22 @@ export default async function OrdersPage({
   return (
     <div className="space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold">Commandes</h1>
-        <p className="text-sm text-muted-foreground">Regroupées par produit</p>
+        <h1 className="text-2xl font-bold">{trashView ? "Corbeille" : "Commandes"}</h1>
+        <p className="text-sm text-muted-foreground">
+          {trashView
+            ? "Ces commandes ne comptent dans aucune statistique. Restaurez-les si besoin."
+            : "Regroupées par produit"}
+        </p>
       </div>
 
       {/* status filter bar */}
       <div className="flex flex-wrap gap-2">
-        <FilterPill href="/admin/orders" label="Toutes" count={totalCount} active={!activeStatus} />
+        <FilterPill
+          href="/admin/orders"
+          label="Toutes"
+          count={totalCount}
+          active={!activeStatus && !trashView}
+        />
         {statuses.map((s) => (
           <FilterPill
             key={s.key}
@@ -100,10 +121,18 @@ export default async function OrdersPage({
             active={activeStatus === s.key}
           />
         ))}
+        <FilterPill
+          href="/admin/orders?view=trash"
+          label="Corbeille"
+          count={trashCount ?? 0}
+          active={trashView}
+        />
       </div>
 
       {orders.length === 0 ? (
-        <p className="py-16 text-center text-muted-foreground">Aucune commande.</p>
+        <p className="py-16 text-center text-muted-foreground">
+          {trashView ? "La corbeille est vide." : "Aucune commande."}
+        </p>
       ) : (
         <div className="space-y-8">
           {[...groups.entries()].map(([productId, group]) => (
@@ -163,7 +192,14 @@ export default async function OrdersPage({
                           <StatusBadge status={o.status} statuses={statuses} />
                         </TableCell>
                         <TableCell>
-                          <OrderStatusControl orderId={o.id} status={o.status} statuses={statuses} />
+                          {trashView ? (
+                            <OrderTrashControl orderId={o.id} trashed />
+                          ) : (
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <OrderStatusControl orderId={o.id} status={o.status} statuses={statuses} />
+                              <OrderTrashControl orderId={o.id} trashed={false} />
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

@@ -1,8 +1,10 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { OrderEditForm } from "@/components/admin/order-edit-form";
 import { OrderStatusControl } from "@/components/admin/order-status-control";
+import { OrderTrashControl } from "@/components/admin/order-trash-control";
 import { StatusBadge } from "@/components/admin/status-badge";
 import {
   Table,
@@ -36,16 +38,17 @@ export default async function OrderDetailPage({
 
   if (!data) notFound();
 
+  const trashed = Boolean(data.deleted_at);
   const wilaya = getWilaya(data.wilaya_code);
   const commune = getCommune(data.commune_id);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
       <Link
-        href="/admin/orders"
+        href={trashed ? "/admin/orders?view=trash" : "/admin/orders"}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="size-4" /> Retour aux commandes
+        <ArrowLeft className="size-4" /> {trashed ? "Retour à la corbeille" : "Retour aux commandes"}
       </Link>
 
       <div className="flex items-center justify-between">
@@ -55,13 +58,35 @@ export default async function OrderDetailPage({
             {new Date(data.created_at).toLocaleString("fr-FR")}
           </p>
         </div>
-        <StatusBadge status={data.status} statuses={statuses} className="text-sm" />
+        <div className="flex items-center gap-2">
+          <StatusBadge status={data.status} statuses={statuses} className="text-sm" />
+          {!trashed && <OrderTrashControl orderId={data.id} trashed={false} redirectOnTrash />}
+        </div>
       </div>
 
-      <div className="rounded-xl border p-4">
-        <h2 className="mb-3 font-semibold">Mettre à jour le statut</h2>
-        <OrderStatusControl orderId={data.id} status={data.status} statuses={statuses} />
-      </div>
+      {trashed ? (
+        <div className="space-y-3 rounded-xl border border-destructive/40 bg-destructive/5 p-4">
+          <p className="flex items-center gap-2 text-sm font-medium text-destructive">
+            <Trash2 className="size-4" />
+            Cette commande est dans la corbeille : elle ne compte dans aucune statistique et son
+            stock a été libéré.
+          </p>
+          <OrderTrashControl orderId={data.id} trashed />
+        </div>
+      ) : (
+        <>
+          <div className="rounded-xl border p-4">
+            <h2 className="mb-3 font-semibold">Mettre à jour le statut</h2>
+            <OrderStatusControl orderId={data.id} status={data.status} statuses={statuses} />
+          </div>
+
+          <OrderEditForm
+            order={data}
+            quantity={data.order_items[0]?.quantity ?? 1}
+            singleItem={data.order_items.length === 1}
+          />
+        </>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <InfoCard title="Client">

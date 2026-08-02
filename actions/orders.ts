@@ -166,3 +166,93 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
   revalidatePath(`/admin/orders/${orderId}`);
   return { ok: true };
 }
+
+const RPC_ERRORS: Record<string, string> = {
+  not_authorized: "Vous n'avez pas la permission de modifier les commandes.",
+  order_not_found: "Commande introuvable.",
+  order_in_trash: "Cette commande est dans la corbeille. Restaurez-la d'abord.",
+  order_not_trashed: "Seule une commande dans la corbeille peut être supprimée définitivement.",
+  invalid_commune_for_wilaya: "La commune ne correspond pas à la wilaya.",
+  no_delivery_to_wilaya: "Livraison indisponible vers cette wilaya.",
+  home_delivery_unavailable: "Livraison à domicile indisponible ici.",
+  stopdesk_unavailable: "Livraison au bureau indisponible ici.",
+  insufficient_stock: "Stock insuffisant pour augmenter la quantité.",
+  multi_item_order: "La quantité ne peut être modifiée que sur une commande à un seul produit.",
+  invalid_quantity: "Quantité invalide.",
+  name_required: "Le nom est obligatoire.",
+  phone_required: "Le téléphone est obligatoire.",
+  product_unavailable: "Ce produit n'existe plus.",
+};
+
+/** Maps a Postgres `raise exception` name to a message the admin can act on. */
+function rpcError(message: string) {
+  const key = Object.keys(RPC_ERRORS).find((k) => message.includes(k));
+  return key ? RPC_ERRORS[key] : message;
+}
+
+function revalidateOrder(orderId?: string) {
+  revalidatePath("/admin");
+  revalidatePath("/admin/orders");
+  if (orderId) revalidatePath(`/admin/orders/${orderId}`);
+}
+
+/** Soft delete: the order leaves every list and every stat, and releases the
+ *  stock it was holding — but it can be restored. */
+export async function trashOrder(orderId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("trash_order", { p_order_id: orderId });
+  if (error) return { ok: false, error: rpcError(error.message) };
+  revalidateOrder(orderId);
+  return { ok: true };
+}
+
+/** Undo a trashing: re-applies the stock effect of the order's current status. */
+export async function restoreOrder(orderId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("restore_order", { p_order_id: orderId });
+  if (error) return { ok: false, error: rpcError(error.message) };
+  revalidateOrder(orderId);
+  return { ok: true };
+}
+
+/** Irreversible. Only reachable from the trash. */
+export async function purgeOrder(orderId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("purge_order", { p_order_id: orderId });
+  if (error) return { ok: false, error: rpcError(error.message) };
+  revalidateOrder(orderId);
+  return { ok: true };
+}
+
+export interface OrderEditInput {
+  customer_name: string;
+  customer_phone: string;
+  wilaya_code: number;
+  commune_id: number;
+  address: string | null;
+  delivery_method: "home" | "stopdesk";
+  notes: string | null;
+  /** Only for single-line orders; re-prices via the bundle offers. */
+  quantity: number | null;
+}
+
+/** Fix a customer's mistake. The RPC recomputes the delivery fee (honouring a
+ *  free-delivery offer), the line price and the totals, and moves stock when the
+ *  quantity changes. */
+export async function updateOrderDetails(orderId: string, input: OrderEditInput) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_order_details", {
+    p_order_id: orderId,
+    p_customer_name: input.customer_name,
+    p_customer_phone: input.customer_phone,
+    p_wilaya_code: input.wilaya_code,
+    p_commune_id: input.commune_id,
+    p_address: input.address,
+    p_delivery_method: input.delivery_method,
+    p_notes: input.notes,
+    p_quantity: input.quantity,
+  });
+  if (error) return { ok: false, error: rpcError(error.message) };
+  revalidateOrder(orderId);
+  return { ok: true };
+}

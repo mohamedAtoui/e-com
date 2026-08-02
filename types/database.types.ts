@@ -78,6 +78,8 @@ export type OrderRow = {
   created_at: string;
   updated_at: string;
   confirmed_at: string | null;
+  /** Set when the order sits in the trash: hidden and counted nowhere. */
+  deleted_at: string | null;
 };
 
 export type OrderItemRow = {
@@ -262,6 +264,23 @@ export type Database = {
       };
       update_order_status: {
         Args: { p_order_id: string; p_status: OrderStatus };
+        Returns: undefined;
+      };
+      trash_order: { Args: { p_order_id: string }; Returns: undefined };
+      restore_order: { Args: { p_order_id: string }; Returns: undefined };
+      purge_order: { Args: { p_order_id: string }; Returns: undefined };
+      update_order_details: {
+        Args: {
+          p_order_id: string;
+          p_customer_name: string;
+          p_customer_phone: string;
+          p_wilaya_code: number;
+          p_commune_id: number;
+          p_address: string | null;
+          p_delivery_method: DeliveryMethod;
+          p_notes: string | null;
+          p_quantity?: number | null;
+        };
         Returns: undefined;
       };
       is_admin: { Args: Record<string, never>; Returns: boolean };

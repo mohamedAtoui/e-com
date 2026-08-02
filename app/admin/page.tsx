@@ -1,11 +1,11 @@
 import {
   AlertTriangle,
-  Ban,
   MapPin,
   Package,
   ShoppingCart,
   Truck,
   TrendingUp,
+  Undo2,
   Users,
   Wallet,
 } from "lucide-react";
@@ -51,7 +51,11 @@ type OrderLite = {
 };
 
 const DAY = 86_400_000;
-const LOST = new Set(["cancelled", "returned"]);
+// Neither of these earns money, so both stay out of revenue. They are reported
+// differently though: a return is a real loss (goods went out and came back),
+// a cancellation is an order that simply never happened.
+const NON_REVENUE = new Set(["cancelled", "returned"]);
+const RETURNED = "returned";
 
 /** Resolve the active window from either a preset range or explicit dates. */
 function resolveWindow(range: string, from: string, to: string) {
@@ -153,6 +157,7 @@ export default async function DashboardPage({
       .select(
         "id, order_number, customer_name, status, total, subtotal, delivery_method, wilaya_code, created_at, order_items(product_id, product_name_fr, quantity, unit_price)",
       )
+      .is("deleted_at", null) // trashed orders count for nothing
       .gte("created_at", win.start.toISOString())
       .lte("created_at", win.end.toISOString())
       .order("created_at", { ascending: false })
@@ -180,14 +185,15 @@ export default async function DashboardPage({
   if (productFilter) leads = leads.filter((l) => l.product_id === productFilter);
 
   // ---- KPIs -------------------------------------------------------------
-  const won = orders.filter((o) => !LOST.has(o.status));
+  const won = orders.filter((o) => !NON_REVENUE.has(o.status));
   const delivered = orders.filter((o) => o.status === "delivered");
   const pipeline = won.filter((o) => o.status !== "delivered");
-  const lost = orders.filter((o) => LOST.has(o.status));
+  const returned = orders.filter((o) => o.status === RETURNED);
+  const cancelled = orders.filter((o) => o.status === "cancelled");
 
   const revenueDelivered = delivered.reduce((s, o) => s + o.total, 0);
   const revenuePipeline = pipeline.reduce((s, o) => s + o.total, 0);
-  const revenueLost = lost.reduce((s, o) => s + o.total, 0);
+  const revenueReturned = returned.reduce((s, o) => s + o.total, 0);
   const aov = won.length ? Math.round(won.reduce((s, o) => s + o.total, 0) / won.length) : 0;
 
   const unitsSold = won.reduce(
@@ -199,9 +205,13 @@ export default async function DashboardPage({
     0,
   );
 
-  const settled = delivered.length + lost.length;
+  // "Finalisées" = orders that reached an end state, so the delivery rate isn't
+  // diluted by orders still in flight.
+  const settled = delivered.length + returned.length + cancelled.length;
   const deliveryRate = settled ? Math.round((delivered.length / settled) * 100) : 0;
-  const cancelRate = orders.length ? Math.round((lost.length / orders.length) * 100) : 0;
+  const returnRate = delivered.length + returned.length
+    ? Math.round((returned.length / (delivered.length + returned.length)) * 100)
+    : 0;
 
   const activeLeads = leads.filter((l) => l.status === "active").length;
   const convertedLeads = leads.filter((l) => l.status === "converted").length;
@@ -225,12 +235,13 @@ export default async function DashboardPage({
   const { data: prevRaw } = await supabase
     .from("orders")
     .select("status, total, wilaya_code, order_items(product_id)")
+    .is("deleted_at", null)
     .gte("created_at", prevFrom.toISOString())
     .lt("created_at", chartStart.toISOString())
     .returns<{ status: string; total: number; wilaya_code: number; order_items: { product_id: string }[] }[]>();
   const prevOrders = (prevRaw ?? []).filter(
     (o) =>
-      !LOST.has(o.status) &&
+      !NON_REVENUE.has(o.status) &&
       (!productFilter || (o.order_items ?? []).some((i) => i.product_id === productFilter)) &&
       (!wilayaFilter || String(o.wilaya_code) === wilayaFilter) &&
       (!statusFilter || o.status === statusFilter),
@@ -309,7 +320,12 @@ export default async function DashboardPage({
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Stat icon={Wallet} label="CA livré" value={formatDZD(revenueDelivered)} hint={`${delivered.length} livrée(s)`} accent />
         <Stat icon={TrendingUp} label="En cours" value={formatDZD(revenuePipeline)} hint={`${pipeline.length} en cours`} />
-        <Stat icon={Ban} label="Perdu (annulé/retour)" value={formatDZD(revenueLost)} hint={`${lost.length} commande(s) · ${cancelRate}%`} />
+        <Stat
+          icon={Undo2}
+          label="Retours"
+          value={formatDZD(revenueReturned)}
+          hint={`${returned.length} retour(s) · ${returnRate}% des livraisons`}
+        />
         <Stat icon={ShoppingCart} label="Panier moyen" value={formatDZD(aov)} hint={`${unitsSold} unité(s) vendue(s)`} />
       </div>
 
