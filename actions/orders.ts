@@ -68,15 +68,30 @@ export async function createOrder(
 
   const result = data as unknown as CreateOrderResult;
 
-  // Mark the abandoned-checkout lead as converted (best-effort; non-blocking).
+  // Mark the abandoned-checkout lead as converted.
+  // UPSERT (not update): the client saves leads on a 900 ms debounce, so a fast
+  // shopper can submit before the lead row exists. An update would match zero
+  // rows and a late debounce would then insert a fresh `active` row — making a
+  // completed order show up as an abandoned cart. Upserting writes the row as
+  // converted either way, and a late debounce only rewrites the data columns
+  // (it never sends `status`), so it stays converted.
   if (leadId) {
-    await admin
-      .from("checkout_leads")
-      .update({ status: "converted", order_id: result.order_id })
-      .eq("id", leadId)
-      .then(({ error }) => {
-        if (error) console.error("[lead convert]", error.message);
-      });
+    const { error: leadErr } = await admin.from("checkout_leads").upsert(
+      {
+        id: leadId,
+        product_id: productId,
+        customer_name: v.customer_name,
+        customer_phone: v.customer_phone,
+        wilaya_code: v.wilaya_code,
+        commune_id: v.commune_id,
+        delivery_method: v.delivery_method,
+        quantity: v.quantity,
+        status: "converted",
+        order_id: result.order_id,
+      },
+      { onConflict: "id" },
+    );
+    if (leadErr) console.error("[lead convert]", leadErr.message);
   }
 
   // Server-side CAPI Lead (deduped client-side via meta_event_id).

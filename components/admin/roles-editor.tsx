@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import type { RoleRow } from "@/types/database.types";
 
 export const ALL_PAGES: { key: string; label: string }[] = [
+  { key: "dashboard", label: "Tableau de bord" },
   { key: "orders", label: "Commandes" },
   { key: "leads", label: "Paniers abandonnés" },
   { key: "products", label: "Produits" },

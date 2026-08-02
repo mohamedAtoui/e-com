@@ -1,14 +1,16 @@
 "use client";
 
-import { Boxes, ClipboardList, Settings, ShoppingCart, Store } from "lucide-react";
+import { Boxes, ClipboardList, LayoutDashboard, Settings, ShoppingCart, Store } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { signOut } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
+import { allows } from "@/lib/admin-guard-shared";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
+  { href: "/admin", label: "Tableau de bord", icon: LayoutDashboard, page: "dashboard" },
   { href: "/admin/orders", label: "Commandes", icon: ClipboardList, page: "orders" },
   { href: "/admin/leads", label: "Paniers abandonnés", icon: ShoppingCart, page: "leads" },
   { href: "/admin/products", label: "Produits", icon: Boxes, page: "products" },
@@ -17,11 +19,11 @@ const LINKS = [
 
 export function AdminNav({ pages }: { pages?: string[] }) {
   const pathname = usePathname();
-  const links = pages ? LINKS.filter((l) => pages.includes(l.page)) : LINKS;
+  const links = pages ? LINKS.filter((l) => allows(pages, l.page)) : LINKS;
   return (
     <nav className="flex flex-col gap-1">
       {links.map((l) => {
-        const active = pathname.startsWith(l.href);
+        const active = l.href === "/admin" ? pathname === "/admin" : pathname.startsWith(l.href);
         const Icon = l.icon;
         return (
           <Link

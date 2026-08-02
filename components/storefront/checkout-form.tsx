@@ -117,10 +117,16 @@ export function CheckoutForm({
     }
   }, [productId]);
 
+  // Once the order is placed we must stop touching the lead: a late debounce
+  // would re-insert it as `active` and the completed order would show up in
+  // "paniers abandonnés".
+  const orderedRef = useRef(false);
+
   useEffect(() => {
-    if (!leadIdRef.current) return;
+    if (!leadIdRef.current || orderedRef.current) return;
     if ((customerPhone ?? "").replace(/\D/g, "").length < 9) return;
     const t = setTimeout(() => {
+      if (orderedRef.current) return;
       saveCheckoutLead({
         lead_id: leadIdRef.current,
         product_id: productId,
@@ -168,11 +174,20 @@ export function CheckoutForm({
 
   async function onSubmit(values: CheckoutInput) {
     setServerError(null);
+    // Stop the lead debounce before the round-trip so nothing can re-open this
+    // lead as "abandoned" while the order is being created.
+    orderedRef.current = true;
     const res = await createOrder(productId, values, leadIdRef.current || undefined);
     if (!res.ok || !res.result) {
+      // Failed: let lead capture resume so the shopper is still recoverable.
+      orderedRef.current = false;
       setServerError(res.error ?? "Erreur");
       return;
     }
+    // Order placed — retire this lead id so a fresh visit starts a new lead.
+    try {
+      sessionStorage.removeItem(`lead-${productId}`);
+    } catch {}
     // The Lead Pixel event fires on the thank-you page (reliable post-navigation
     // and deduped server-side via meta_event_id). Redirect there now.
     router.push(`/commande/${res.result.meta_event_id}`);

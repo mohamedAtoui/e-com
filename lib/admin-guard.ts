@@ -2,9 +2,8 @@ import "server-only";
 
 import { redirect } from "next/navigation";
 
+import { allows, ROUTE_PAGES } from "@/lib/admin-guard-shared";
 import { createClient } from "@/lib/supabase/server";
-
-const ROUTE_PAGES = ["orders", "products", "leads", "settings"];
 
 /**
  * Current admin's allowed page keys, or `null` when RBAC isn't active yet
@@ -22,8 +21,9 @@ export async function myPages(): Promise<string[] | null> {
 export async function guardPage(page: string): Promise<void> {
   const allowed = await myPages();
   if (allowed === null) return;
-  if (!allowed.includes(page)) {
-    const dest = ROUTE_PAGES.find((p) => allowed.includes(p));
-    redirect(dest ? `/admin/${dest}` : "/");
+  if (!allows(allowed, page)) {
+    const dest = ROUTE_PAGES.find((p) => allows(allowed, p));
+    if (!dest) redirect("/");
+    redirect(dest === "dashboard" ? "/admin" : `/admin/${dest}`);
   }
 }

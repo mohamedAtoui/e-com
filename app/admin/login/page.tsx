@@ -27,7 +27,7 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
-    router.replace(params.get("next") || "/admin/orders");
+    router.replace(params.get("next") || "/admin");
     router.refresh();
   }
 
