@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 
 import { DashboardFilters, type FilterOption } from "@/components/admin/dashboard-filters";
+import { RevenueChart, type TrendPoint } from "@/components/admin/revenue-chart";
 import { StatusBadge } from "@/components/admin/status-badge";
 import {
   Table,
@@ -71,6 +72,64 @@ function resolveWindow(range: string, from: string, to: string) {
     "90d": "90 derniers jours",
   };
   return { start, end, label: labels[range] ?? "30 derniers jours" };
+}
+
+/**
+ * Continuous, zero-filled trend buckets. Granularity adapts to the span so the
+ * chart never renders hundreds of bars: day → week → month.
+ */
+function buildTrend(
+  orders: { created_at: string; total: number }[],
+  start: Date,
+  end: Date,
+): TrendPoint[] {
+  const spanDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / DAY));
+  const grain: "day" | "week" | "month" = spanDays <= 45 ? "day" : spanDays <= 210 ? "week" : "month";
+
+  const keyOf = (d: Date) => {
+    if (grain === "month") return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    if (grain === "week") {
+      const offset = Math.floor((d.getTime() - start.getTime()) / (7 * DAY));
+      return `w${offset}`;
+    }
+    return d.toISOString().slice(0, 10);
+  };
+
+  const totals = new Map<string, { revenue: number; orders: number }>();
+  for (const o of orders) {
+    const k = keyOf(new Date(o.created_at));
+    const cur = totals.get(k) ?? { revenue: 0, orders: 0 };
+    cur.revenue += o.total;
+    cur.orders += 1;
+    totals.set(k, cur);
+  }
+
+  const points: TrendPoint[] = [];
+  const cursor = new Date(start);
+  const fmtShort = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit" });
+  const fmtFullDay = new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+  const fmtMonth = new Intl.DateTimeFormat("fr-FR", { month: "short", year: "2-digit" });
+  const fmtMonthFull = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
+
+  while (cursor <= end && points.length < 200) {
+    const key = keyOf(cursor);
+    const v = totals.get(key) ?? { revenue: 0, orders: 0 };
+    points.push({
+      key,
+      label: grain === "month" ? fmtMonth.format(cursor) : fmtShort.format(cursor),
+      full:
+        grain === "month"
+          ? fmtMonthFull.format(cursor)
+          : grain === "week"
+            ? `Semaine du ${fmtShort.format(cursor)}`
+            : fmtFullDay.format(cursor),
+      revenue: v.revenue,
+      orders: v.orders,
+    });
+    if (grain === "month") cursor.setMonth(cursor.getMonth() + 1);
+    else cursor.setDate(cursor.getDate() + (grain === "week" ? 7 : 1));
+  }
+  return points;
 }
 
 export default async function DashboardPage({
@@ -152,22 +211,34 @@ export default async function DashboardPage({
   const homeCount = orders.filter((o) => o.delivery_method === "home").length;
   const deskCount = orders.filter((o) => o.delivery_method === "stopdesk").length;
 
-  // ---- Trend (day buckets, or month when the span is long) --------------
-  const spanDays = Math.max(1, Math.ceil((win.end.getTime() - win.start.getTime()) / DAY));
-  const byMonth = spanDays > 62;
-  const buckets = new Map<string, { revenue: number; orders: number }>();
-  for (const o of won) {
-    const d = new Date(o.created_at);
-    const key = byMonth
-      ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-      : d.toISOString().slice(0, 10);
-    const cur = buckets.get(key) ?? { revenue: 0, orders: 0 };
-    cur.revenue += o.total;
-    cur.orders += 1;
-    buckets.set(key, cur);
-  }
-  const trend = [...buckets.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-30);
-  const trendMax = Math.max(1, ...trend.map(([, v]) => v.revenue));
+  // ---- Trend: continuous, zero-filled buckets at an adaptive granularity --
+  // "Tout" starts at the first real order so we never render years of zeros.
+  const firstOrderAt = orders.length
+    ? new Date(orders[orders.length - 1].created_at).getTime()
+    : win.end.getTime();
+  const chartStart = new Date(Math.max(win.start.getTime(), firstOrderAt));
+  const trend = buildTrend(won, chartStart, win.end);
+
+  // Same-length window immediately before, for the "vs période précédente" delta.
+  const prevSpan = win.end.getTime() - chartStart.getTime();
+  const prevFrom = new Date(chartStart.getTime() - prevSpan);
+  const { data: prevRaw } = await supabase
+    .from("orders")
+    .select("status, total, wilaya_code, order_items(product_id)")
+    .gte("created_at", prevFrom.toISOString())
+    .lt("created_at", chartStart.toISOString())
+    .returns<{ status: string; total: number; wilaya_code: number; order_items: { product_id: string }[] }[]>();
+  const prevOrders = (prevRaw ?? []).filter(
+    (o) =>
+      !LOST.has(o.status) &&
+      (!productFilter || (o.order_items ?? []).some((i) => i.product_id === productFilter)) &&
+      (!wilayaFilter || String(o.wilaya_code) === wilayaFilter) &&
+      (!statusFilter || o.status === statusFilter),
+  );
+  const previous = {
+    revenue: prevOrders.reduce((s, o) => s + o.total, 0),
+    orders: prevOrders.length,
+  };
 
   // ---- Breakdowns -------------------------------------------------------
   const counts = orders.reduce<Record<string, number>>((acc, o) => {
@@ -255,37 +326,7 @@ export default async function DashboardPage({
         />
       </div>
 
-      {/* Trend */}
-      <section className="rounded-xl border p-4">
-        <h2 className="mb-4 font-semibold">Évolution du chiffre d&apos;affaires</h2>
-        {trend.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Aucune donnée sur cette période.</p>
-        ) : (
-          <div className="flex h-40 items-end gap-1.5 overflow-x-auto">
-            {trend.map(([key, v]) => (
-              <div
-                key={key}
-                className="group flex h-full min-w-[18px] flex-1 flex-col items-center justify-end gap-1"
-                title={`${key} · ${formatDZD(v.revenue)} · ${v.orders} commande(s)`}
-              >
-                <span className="whitespace-nowrap text-[10px] font-semibold text-foreground/70 opacity-0 transition group-hover:opacity-100">
-                  {formatDZD(v.revenue)}
-                </span>
-                {/* flex-1 track gives the % bar a definite height to resolve against */}
-                <div className="flex w-full flex-1 items-end">
-                  <div
-                    className="w-full rounded-t bg-[#3F8F2B]/80 transition group-hover:bg-[#3F8F2B]"
-                    style={{ height: `${Math.max(4, (v.revenue / trendMax) * 100)}%` }}
-                  />
-                </div>
-                <span className="whitespace-nowrap text-[9px] text-muted-foreground">
-                  {byMonth ? key.slice(2) : key.slice(8)}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      <RevenueChart points={trend} previous={previous} />
 
       <div className="grid gap-5 lg:grid-cols-2">
         {/* Statuses */}
