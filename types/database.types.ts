@@ -151,6 +151,13 @@ export type CheckoutLeadRow = {
   updated_at: string;
 };
 
+export type VisitRow = {
+  id: string;
+  visitor_id: string;
+  path: string | null;
+  created_at: string;
+};
+
 export type StockMovementRow = {
   id: string;
   product_id: string;
@@ -255,6 +262,7 @@ export type Database = {
       order_statuses: Table<OrderStatusRow>;
       roles: Table<RoleRow>;
       product_reviews: Table<ProductReviewRow>;
+      visits: Table<VisitRow>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -291,6 +299,7 @@ export type Database = {
         Args: Record<string, never>;
         Returns: { store_name: string; meta_pixel_id: string | null };
       };
+      log_visit: { Args: { p_visitor_id: string; p_path: string }; Returns: undefined };
     };
   };
 };

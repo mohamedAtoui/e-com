@@ -1,6 +1,8 @@
 import {
   AlertTriangle,
+  Eye,
   MapPin,
+  MousePointerClick,
   Package,
   ShoppingCart,
   Truck,
@@ -151,7 +153,7 @@ export default async function DashboardPage({
 
   const supabase = await createClient();
 
-  const [ordersRes, leadsRes, productsRes, statusesRes] = await Promise.all([
+  const [ordersRes, leadsRes, productsRes, statusesRes, visitsRes] = await Promise.all([
     supabase
       .from("orders")
       .select(
@@ -165,6 +167,12 @@ export default async function DashboardPage({
     supabase.from("checkout_leads").select("id, status, product_id, created_at"),
     supabase.from("products").select("id, name_fr, slug, stock_quantity, reserved_quantity, is_active"),
     supabase.from("order_statuses").select("*").order("sort_order"),
+    supabase
+      .from("visits")
+      .select("visitor_id, created_at")
+      .gte("created_at", win.start.toISOString())
+      .lte("created_at", win.end.toISOString())
+      .returns<{ visitor_id: string; created_at: string }[]>(),
   ]);
 
   const allProducts = productsRes.data ?? [];
@@ -220,6 +228,17 @@ export default async function DashboardPage({
 
   const homeCount = orders.filter((o) => o.delivery_method === "home").length;
   const deskCount = orders.filter((o) => o.delivery_method === "stopdesk").length;
+
+  // ---- Traffic (first-party page views) ---------------------------------
+  const visits = visitsRes.data ?? [];
+  const uniqueVisitors = new Set(visits.map((v) => v.visitor_id)).size;
+  const pageViews = visits.length;
+  const todayStartMs = new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00.000Z`).getTime();
+  const visitorsToday = new Set(
+    visits.filter((v) => new Date(v.created_at).getTime() >= todayStartMs).map((v) => v.visitor_id),
+  ).size;
+  // Visitors → valid orders, for the selected window.
+  const visitConversion = uniqueVisitors ? Math.round((won.length / uniqueVisitors) * 100) : 0;
 
   // ---- Trend: continuous, zero-filled buckets at an adaptive granularity --
   // "Tout" starts at the first real order so we never render years of zeros.
@@ -340,6 +359,14 @@ export default async function DashboardPage({
           value={`${homeCount} / ${deskCount}`}
           hint="Domicile / Stop desk"
         />
+      </div>
+
+      {/* Traffic — first-party visits (also visible in Vercel → Analytics) */}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Stat icon={Users} label="Visiteurs" value={uniqueVisitors.toLocaleString("fr-FR")} hint={`${visitorsToday} aujourd'hui`} accent />
+        <Stat icon={Eye} label="Pages vues" value={pageViews.toLocaleString("fr-FR")} hint="sur la période" />
+        <Stat icon={MousePointerClick} label="Visiteurs → commandes" value={`${visitConversion}%`} hint={`${won.length} commande(s) valides`} />
+        <Stat icon={ShoppingCart} label="Paniers abandonnés" value={String(activeLeads)} hint={`${convertedLeads} converti(s)`} />
       </div>
 
       <RevenueChart points={trend} previous={previous} />
