@@ -3,6 +3,7 @@ import { MetaPixel } from "@/components/storefront/meta-pixel";
 import { MotionProvider } from "@/components/storefront/motion-provider";
 import { SiteFooter } from "@/components/storefront/site-footer";
 import { SiteHeader } from "@/components/storefront/site-header";
+import { VisitTracker } from "@/components/storefront/visit-tracker";
 import { createPublicClient } from "@/lib/supabase/public";
 
 const GRAIN =
@@ -43,6 +44,7 @@ export default async function StorefrontLayout({
         <main className="flex-1 overflow-x-hidden">{children}</main>
       </MotionProvider>
       <SiteFooter />
+      <VisitTracker />
     </LangProvider>
   );
 }
