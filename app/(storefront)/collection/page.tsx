@@ -11,6 +11,7 @@ export default async function CollectionPage() {
       "slug, name_fr, name_ar, price, compare_at_price, images, stock_quantity, reserved_quantity, category",
     )
     .eq("is_active", true)
+    .not("slug", "like", "carry-%")
     .order("created_at", { ascending: false });
 
   return <CollectionView products={products ?? []} />;

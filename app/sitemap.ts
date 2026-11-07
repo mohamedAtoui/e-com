@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { createPublicClient } from "@/lib/supabase/public";
+import { productHref } from "@/lib/shop-routing";
 
 export const revalidate = 3600;
 
@@ -14,13 +15,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .eq("is_active", true);
 
   const products = (data ?? []).map((p) => ({
-    url: `${BASE}/products/${p.slug}`,
+    url: `${BASE}${productHref(p.slug)}`,
     lastModified: p.updated_at,
   }));
 
   return [
     { url: BASE, changeFrequency: "daily", priority: 1 },
     { url: `${BASE}/collection`, changeFrequency: "daily", priority: 0.9 },
+    { url: `${BASE}/carry`, changeFrequency: "daily", priority: 0.8 },
     ...products,
   ];
 }

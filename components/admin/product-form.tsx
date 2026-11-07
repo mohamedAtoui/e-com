@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -15,10 +16,12 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { productSchema, slugify, type ProductInput } from "@/lib/validators";
 import type { ContentBlock, ProductRow } from "@/types/database.types";
+import { isCarryProduct, slugForShop, type Shop } from "@/lib/shop-routing";
 
 export function ProductForm({ initial }: { initial?: ProductRow }) {
   const router = useRouter();
   const editing = Boolean(initial);
+  const [shop, setShop] = useState<Shop>(isCarryProduct(initial?.slug ?? "") ? "carry" : "lighty");
 
   const {
     register,
@@ -60,6 +63,7 @@ export function ProductForm({ initial }: { initial?: ProductRow }) {
   ];
 
   async function onSubmit(values: ProductInput) {
+    values = { ...values, slug: slugForShop(values.slug, shop), ...(shop === "carry" ? { category: "autre" as const } : {}) };
     const res = editing
       ? await updateProduct(initial!.id, values)
       : await createProduct(values);
@@ -74,6 +78,19 @@ export function ProductForm({ initial }: { initial?: ProductRow }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl space-y-6">
+      <div className="space-y-2 rounded-xl border p-4">
+        <Label htmlFor="storefront">Boutique</Label>
+        <select id="storefront" value={shop} className="h-11 w-full rounded-lg border px-3 text-sm" onChange={(event) => {
+          const nextShop = event.target.value as Shop;
+          setShop(nextShop);
+          setValue("slug", slugForShop(getValues("slug") || slugify(getValues("name_fr")), nextShop), { shouldDirty: true });
+          if (nextShop === "carry") setValue("category", "autre");
+        }}>
+          <option value="lighty">Lighty — Luminaires & décoration</option>
+          <option value="carry">CARRY — Sacs & accessoires</option>
+        </select>
+        <p className="text-xs text-muted-foreground">{shop === "carry" ? "Visible sur /carry. Le préfixe carry- du slug est géré automatiquement. Mêmes commandes, stock et offres, sans modification de la base." : "Visible sur la boutique Lighty. Les produits CARRY ont leur propre collection."}</p>
+      </div>
       <div className="space-y-1.5">
         <Label>Images</Label>
         <Controller
@@ -92,7 +109,7 @@ export function ProductForm({ initial }: { initial?: ProductRow }) {
             id="name_fr"
             {...register("name_fr", {
               onBlur: () => {
-                if (!getValues("slug")) setValue("slug", slugify(getValues("name_fr")));
+                if (!getValues("slug")) setValue("slug", slugForShop(slugify(getValues("name_fr")), shop));
               },
             })}
           />
@@ -194,7 +211,7 @@ export function ProductForm({ initial }: { initial?: ProductRow }) {
         </div>
 
         {offerFields.length === 0 && (
-          <p className="text-xs text-muted-foreground">Aucune offre. Le prix unitaire s'applique.</p>
+          <p className="text-xs text-muted-foreground">Aucune offre. Le prix unitaire s’applique.</p>
         )}
 
         {offerFields.map((field, i) => (

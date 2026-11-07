@@ -13,10 +13,12 @@ export function OrderConfirmation({
   summary,
   locality,
   eventId,
+  shopHref = "/collection",
 }: {
   summary: NonNullable<OrderSummary>;
   locality: string;
   eventId: string;
+  shopHref?: string;
 }) {
   const { t, lang } = useLang();
   const p = t.product;
@@ -86,7 +88,7 @@ export function OrderConfirmation({
       </div>
 
       <Link
-        href="/collection"
+        href={shopHref}
         className="mt-8 inline-flex items-center rounded-full bg-[#2B2724] px-7 py-3 text-[15px] font-semibold text-[#FAF7F2]"
       >
         {p.backHome}

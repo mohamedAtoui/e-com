@@ -39,6 +39,7 @@ interface CheckoutFormProps {
   /** Cover image path + name, used by the order summary and the sticky bar. */
   image?: string;
   productName?: string;
+  confirmationBasePath?: "/commande" | "/carry/commande";
 }
 
 const selectClass =
@@ -51,6 +52,7 @@ export function CheckoutForm({
   deliveryFees,
   image,
   productName,
+  confirmationBasePath = "/commande",
 }: CheckoutFormProps) {
   const { t, lang } = useLang();
   const p = t.product;
@@ -190,7 +192,7 @@ export function CheckoutForm({
     } catch {}
     // The Lead Pixel event fires on the thank-you page (reliable post-navigation
     // and deduped server-side via meta_event_id). Redirect there now.
-    router.push(`/commande/${res.result.meta_event_id}`);
+    router.push(`${confirmationBasePath}/${res.result.meta_event_id}`);
   }
 
   return (
@@ -279,7 +281,7 @@ export function CheckoutForm({
           <Label htmlFor="customer_name">{p.name}</Label>
           <div className="relative">
             <User className="pointer-events-none absolute top-1/2 size-4 -translate-y-1/2 text-foreground/35 [inset-inline-start:0.75rem]" />
-            <Input id="customer_name" {...register("customer_name")} className="h-11 rounded-xl ps-10" />
+            <Input id="customer_name" autoComplete="shipping name" {...register("customer_name")} className="h-11 rounded-xl ps-10" />
           </div>
           {errors.customer_name && <p className="text-xs text-destructive">{errors.customer_name.message}</p>}
         </div>
@@ -290,6 +292,8 @@ export function CheckoutForm({
             <Phone className="pointer-events-none absolute top-1/2 size-4 -translate-y-1/2 text-foreground/35 [inset-inline-start:0.75rem]" />
             <Input
               id="customer_phone"
+              type="tel"
+              autoComplete="shipping tel"
               inputMode="tel"
               {...register("customer_phone")}
               placeholder="0X XX XX XX XX"
@@ -339,7 +343,7 @@ export function CheckoutForm({
         </div>
 
         {/* 4 — Recap right before the CTA. */}
-        <div className="rounded-2xl bg-[#F4EEE3]/60 p-4">
+        <div data-order-summary className="rounded-2xl bg-[#F4EEE3]/60 p-4">
           <p className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-foreground/55">{p.summary}</p>
           {(image || productName) && (
             <div className="mb-3 flex items-center gap-3">

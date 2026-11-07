@@ -32,6 +32,7 @@ export async function updateDeliveryFee(raw: unknown) {
 
   if (error) return { ok: false, error: error.message };
   revalidatePath("/admin/settings");
+  revalidatePath("/carry", "layout");
   return { ok: true };
 }
 
@@ -60,6 +61,7 @@ export async function updateSettings(raw: unknown) {
 
   if (error) return { ok: false, error: error.message };
   revalidatePath("/admin/settings");
+  revalidatePath("/carry", "layout");
   return { ok: true };
 }
 

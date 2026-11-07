@@ -52,6 +52,7 @@ export async function saveReview(input: ReviewInput): Promise<ReviewActionState>
 
   revalidatePath(`/admin/products/${input.product_id}/edit`);
   revalidatePath("/products", "layout");
+  revalidatePath("/carry/products/[slug]", "page");
   return { ok: true };
 }
 
@@ -61,5 +62,6 @@ export async function deleteReview(id: string, productId: string): Promise<Revie
   if (error) return { ok: false, error: friendly(error.message) };
   revalidatePath(`/admin/products/${productId}/edit`);
   revalidatePath("/products", "layout");
+  revalidatePath("/carry/products/[slug]", "page");
   return { ok: true };
 }

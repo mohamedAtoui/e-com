@@ -1,9 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-
 import { createClient } from "@/lib/supabase/server";
 import { productSchema } from "@/lib/validators";
+
+function revalidateShops() {
+  revalidatePath("/");
+  revalidatePath("/collection");
+  revalidatePath("/products/[slug]", "page");
+  revalidatePath("/carry", "layout");
+  revalidatePath("/sitemap.xml");
+}
 
 export interface ProductActionState {
   ok: boolean;
@@ -48,7 +55,7 @@ export async function createProduct(raw: unknown): Promise<ProductActionState> {
 
   if (error) return { ok: false, error: friendlyError(error.message) };
   revalidatePath("/admin/products");
-  revalidatePath("/");
+  revalidateShops();
   return { ok: true, id: data.id };
 }
 
@@ -103,7 +110,7 @@ export async function updateProduct(
 
   revalidatePath("/admin/products");
   revalidatePath(`/admin/products/${id}/edit`);
-  revalidatePath("/");
+  revalidateShops();
   return { ok: true, id };
 }
 
@@ -127,6 +134,6 @@ export async function deleteProduct(id: string): Promise<ProductActionState> {
   }
 
   revalidatePath("/admin/products");
-  revalidatePath("/");
+  revalidateShops();
   return { ok: true };
 }

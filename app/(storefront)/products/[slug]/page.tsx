@@ -1,6 +1,6 @@
 import { cache } from "react";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
 import { type FeeInfo } from "@/components/storefront/checkout-form";
 import { ProductDetail } from "@/components/storefront/product-detail";
@@ -8,11 +8,13 @@ import { ViewContentTracker } from "@/components/storefront/view-content-tracker
 import { productImageUrl } from "@/lib/images";
 import { createPublicClient } from "@/lib/supabase/public";
 import type { ProductReviewRow } from "@/types/database.types";
+import { isCarryProduct, productHref } from "@/lib/shop-routing";
 
 export const revalidate = 60;
 
 // cache() dedupes the fetch shared by generateMetadata + the page render.
 const getProduct = cache(async (slug: string) => {
+  if (isCarryProduct(slug)) permanentRedirect(productHref(slug));
   const supabase = createPublicClient();
   const { data } = await supabase
     .from("products")
@@ -69,6 +71,7 @@ export default async function ProductPage({
       .select("slug, name_fr, name_ar, price, compare_at_price, images, stock_quantity, reserved_quantity")
       .eq("is_active", true)
       .neq("slug", slug)
+      .not("slug", "like", "carry-%")
       .order("created_at", { ascending: false })
       .limit(4),
   ]);

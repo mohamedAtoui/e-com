@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1100" viewBox="0 0 1000 1100" fill="none">
+  <defs>
+    <linearGradient id="body" x1="270" y1="210" x2="780" y2="900" gradientUnits="userSpaceOnUse"><stop stop-color="#494c48"/><stop offset=".5" stop-color="#242724"/><stop offset="1" stop-color="#101310"/></linearGradient>
+    <linearGradient id="pocket" x1="390" y1="590" x2="650" y2="960" gradientUnits="userSpaceOnUse"><stop stop-color="#42463f"/><stop offset="1" stop-color="#181b17"/></linearGradient>
+    <linearGradient id="gold"><stop stop-color="#e7d5aa"/><stop offset=".5" stop-color="#b69a66"/><stop offset="1" stop-color="#79613e"/></linearGradient>
+    <pattern id="weave" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 1h6M1 0v6" stroke="#fff" stroke-opacity=".045"/><path d="M0 4h6M4 0v6" stroke="#000" stroke-opacity=".16"/></pattern>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="24"/></filter>
+  </defs>
+  <ellipse cx="510" cy="1006" rx="256" ry="31" fill="#111" opacity=".2" filter="url(#shadow)"/>
+  <path d="M311 349C194 330 190 750 251 897l51-25c-39-185-31-389 9-467zM690 350c126-5 133 384 79 548l-50-27c32-171 25-382-29-468z" fill="#1a1d1a" stroke="#42453f" stroke-width="7"/>
+  <path d="M401 250v-70c0-69 197-69 197 0v70" stroke="#20241f" stroke-width="38"/><path d="M401 250v-70c0-69 197-69 197 0v70" stroke="#51554b" stroke-width="2"/>
+  <path d="M269 407c0-115 58-187 174-195h114c115 8 175 80 175 195l32 485c6 74-35 107-111 109H350c-76-2-116-35-110-109z" fill="url(#body)" stroke="#151814" stroke-width="4"/>
+  <path d="M269 407c0-115 58-187 174-195h114c115 8 175 80 175 195l32 485c6 74-35 107-111 109H350c-76-2-116-35-110-109z" fill="url(#weave)"/>
+  <path d="M285 481l16-102c9-73 49-113 131-117h133c82 4 121 44 132 117l12 103" stroke="#111610" stroke-width="14"/>
+  <path d="M285 481l16-102c9-73 49-113 131-117h133c82 4 121 44 132 117l12 103" stroke="#858977" stroke-opacity=".5" stroke-width="2" stroke-dasharray="2 4"/>
+  <path d="M301 584c46-32 348-32 395 0l19 289c2 58-18 79-74 82H360c-55-3-78-24-74-82z" fill="url(#pocket)" stroke="#141813" stroke-width="4"/>
+  <path d="M301 584c46-32 348-32 395 0l19 289c2 58-18 79-74 82H360c-55-3-78-24-74-82z" fill="url(#weave)"/>
+  <path d="M316 606c101-29 262-29 365 0" stroke="#080c08" stroke-width="10"/><path d="M316 606c101-29 262-29 365 0" stroke="#777d6a" stroke-width="2" stroke-dasharray="2 3"/>
+  <rect x="642" y="598" width="15" height="60" rx="7" fill="url(#gold)" transform="rotate(8 642 598)"/>
+  <rect x="448" y="413" width="104" height="63" rx="11" fill="#131713" stroke="#69715d"/>
+  <circle cx="500" cy="444" r="20" stroke="url(#gold)" stroke-width="1.5"/>
+  <path d="M490 449v-10c0-14 20-14 20 0v8m-15 8v-15c0-7 10-7 10 0v14m-5-12v18m-15-14v-7c0-21 30-21 30 0v9" stroke="#c6b18a" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M324 868c72 21 283 21 353 0" stroke="#7a806e" stroke-opacity=".3" stroke-dasharray="3 4"/>
+  <text x="500" y="831" text-anchor="middle" fill="#b8bdb0" font-family="sans-serif" font-size="15" letter-spacing="7">C A R R Y</text>
+</svg>

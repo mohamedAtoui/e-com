@@ -1,4 +1,4 @@
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, ExternalLink } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -17,6 +17,7 @@ import { guardPage } from "@/lib/admin-guard";
 import { productImageUrl } from "@/lib/images";
 import { formatDZD } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
+import { isCarryProduct, productHref } from "@/lib/shop-routing";
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +75,7 @@ export default async function ProductsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">{p.name_fr}</div>
+                      <span className="text-[10px] text-muted-foreground">{isCarryProduct(p.slug) ? "CARRY" : "Lighty"}</span>
                       <div className="font-arabic text-xs text-muted-foreground" dir="rtl">
                         {p.name_ar}
                       </div>
@@ -98,6 +100,7 @@ export default async function ProductsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-1">
+                        <Button render={<Link href={productHref(p.slug)} target="_blank" rel="noopener noreferrer" />} nativeButton={false} variant="ghost" size="icon" aria-label="Voir dans la boutique"><ExternalLink className="size-4"/></Button>
                         <Button
                           render={<Link href={`/admin/products/${p.id}/edit`} />}
                           nativeButton={false}
