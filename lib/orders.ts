@@ -14,6 +14,7 @@ export const ORDER_STATUSES = [
  *  source of truth; these cover the case where it hasn't loaded). */
 export const STATUS_LABELS: Record<string, string> = {
   pending: "En attente",
+  awaiting_confirmation: "En attente",
   confirmed: "Confirmée",
   shipped: "Expédiée",
   delivered: "Livrée",
@@ -23,6 +24,7 @@ export const STATUS_LABELS: Record<string, string> = {
 
 export const STATUS_LABELS_AR: Record<string, string> = {
   pending: "قيد الانتظار",
+  awaiting_confirmation: "قيد الانتظار",
   confirmed: "مؤكدة",
   shipped: "تم الشحن",
   delivered: "تم التسليم",
@@ -32,6 +34,7 @@ export const STATUS_LABELS_AR: Record<string, string> = {
 
 export const STATUS_COLORS: Record<string, string> = {
   pending: "#b98900",
+  awaiting_confirmation: "#b98900",
   confirmed: "#2f7d32",
   shipped: "#1f6feb",
   delivered: "#15803d",

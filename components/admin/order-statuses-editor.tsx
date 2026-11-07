@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { OrderStatusRow, StockEffect } from "@/types/database.types";
+import { isRequiredOrderStatus } from "@/lib/order-pending-policy";
 
 const EFFECTS: { value: StockEffect; label: string }[] = [
   { value: "reserved", label: "Réserve le stock" },
@@ -69,7 +70,7 @@ function Row({ initial }: { initial: Draft }) {
         <Input type="number" className="h-9 w-16" value={d.sort_order} onChange={(e) => setD({ ...d, sort_order: Number(e.target.value) })} />
       </div>
       <Button size="sm" onClick={save} disabled={pending}>Enregistrer</Button>
-      {d.key !== "pending" ? (
+      {!isRequiredOrderStatus(d.key ?? "") ? (
         <Button size="sm" variant="outline" onClick={remove} disabled={pending} aria-label="Supprimer">
           <Trash2 className="size-4" />
         </Button>

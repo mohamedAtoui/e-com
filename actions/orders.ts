@@ -10,6 +10,7 @@ import { sendCapiLead, sendCapiPurchase } from "@/lib/meta/capi";
 import { sendOrderNotification } from "@/lib/notify/telegram";
 import { rateLimit } from "@/lib/rate-limit";
 import { checkoutSchema } from "@/lib/validators";
+import { ensureManualPendingStatus, MANUAL_PENDING_STATUS, protectPendingOrder } from "@/lib/order-pending-policy";
 import type { CreateOrderResult, OrderStatus } from "@/types/database.types";
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -47,6 +48,14 @@ export async function createOrder(
   const v = parsed.data;
 
   const admin = createAdminClient();
+  // Prepare before creating an order: configuration errors must not leave a
+  // newly committed order behind or ask the customer to submit twice.
+  try {
+    await ensureManualPendingStatus(admin);
+  } catch (error) {
+    console.error("[waiting status]", error);
+    return { ok: false, error: "Commande temporairement indisponible. Réessayez." };
+  }
   const { data, error } = await admin.rpc("create_order", {
     p_customer_name: v.customer_name,
     p_customer_phone: v.customer_phone,
@@ -67,6 +76,13 @@ export async function createOrder(
   }
 
   const result = data as unknown as CreateOrderResult;
+  try {
+    await protectPendingOrder(admin, result.order_id);
+  } catch (error) {
+    // The order already exists. Do not report a failed checkout that invites a
+    // duplicate purchase; log this exceptional API failure for intervention.
+    console.error("[order protection failed]", error);
+  }
 
   // Mark the abandoned-checkout lead as converted.
   // UPSERT (not update): the client saves leads on a 900 ms debounce, so a fast
@@ -130,9 +146,10 @@ export async function createOrder(
  *  authenticated admin so RLS + the is_admin() guard apply). */
 export async function updateOrderStatus(orderId: string, status: OrderStatus) {
   const supabase = await createClient();
+  const targetStatus = status === "pending" ? MANUAL_PENDING_STATUS : status;
   const { error } = await supabase.rpc("update_order_status", {
     p_order_id: orderId,
-    p_status: status,
+    p_status: targetStatus,
   });
   if (error) return { ok: false, error: error.message };
 

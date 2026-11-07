@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/validators";
+import { isRequiredOrderStatus, MANUAL_PENDING_STATUS } from "@/lib/order-pending-policy";
 
 export interface ActionState {
   ok: boolean;
@@ -22,6 +23,9 @@ export async function saveOrderStatus(input: {
 }): Promise<ActionState> {
   const supabase = await createClient();
   const key = input.key || slugify(input.label_fr) || `status-${Date.now()}`;
+  if (key === MANUAL_PENDING_STATUS && input.stock_effect !== "reserved") {
+    return { ok: false, error: "Le statut d'attente doit réserver le stock." };
+  }
   const { error } = await supabase.from("order_statuses").upsert({
     key,
     label_fr: input.label_fr,
@@ -38,7 +42,7 @@ export async function saveOrderStatus(input: {
 
 export async function deleteOrderStatus(key: string): Promise<ActionState> {
   // "pending" is required: every new order is created with it.
-  if (key === "pending")
+  if (isRequiredOrderStatus(key))
     return { ok: false, error: "Le statut « En attente » est requis et ne peut pas être supprimé." };
   const supabase = await createClient();
   const { error } = await supabase.from("order_statuses").delete().eq("key", key);

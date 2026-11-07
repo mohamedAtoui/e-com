@@ -54,6 +54,15 @@ proxy.ts                  session refresh + /admin/* auth guard
 
 Pending orders do not expire automatically. An operator confirms, cancels, or
 trashes them in the back office; until then, their stock remains reserved.
+The application uses `awaiting_confirmation` (displayed as **En attente**) to
+protect waiting orders from the old scheduler without requiring SQL access.
+Checkout prepares this status before creating an order and moves the new order
+from the legacy `pending` key immediately afterwards. Returning an order to
+waiting through the app also uses the protected key. Both statuses reserve stock.
+This is a two-request workaround: repeated failure of the protection write is
+logged as `[order protection failed]`; the committed order is still acknowledged
+to avoid inviting duplicate submissions. Database migration 0014 remains the
+preferred atomic way to disable the legacy scheduler once SQL access is restored.
 For existing databases, run
 `supabase/migrations/0014_disable_order_auto_cancellation.sql` in the Supabase SQL
 Editor. This disables the old two-hour cancellation job and makes its legacy
