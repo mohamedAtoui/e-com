@@ -50,6 +50,16 @@ proxy.ts                  session refresh + /admin/* auth guard
 
 ## Setup
 
+### Pending order policy
+
+Pending orders do not expire automatically. An operator confirms, cancels, or
+trashes them in the back office; until then, their stock remains reserved.
+For existing databases, run
+`supabase/migrations/0014_disable_order_auto_cancellation.sql` in the Supabase SQL
+Editor. This disables the old two-hour cancellation job and makes its legacy
+cleanup function a no-op. Merging or deploying the app alone does not apply SQL
+migrations. Already cancelled orders are not automatically restored.
+
 ### 1. Create a Supabase project
 At [supabase.com](https://supabase.com), create a project. From **Project
 Settings → API** copy the Project URL, the anon/publishable key, and the
