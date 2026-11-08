@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight, Banknote } from "lucide-react";
 import { useLang } from "@/components/storefront/lang-provider";
+import { ProductDescription } from "@/components/storefront/product-description";
 import {
   CheckoutForm,
   type FeeInfo,
@@ -165,6 +166,11 @@ export function CarryProduct({
           </section>
         </div>
       </div>
+      {product.description_blocks?.length > 0 && (
+        <div className="carry-enriched-description">
+          <ProductDescription blocks={product.description_blocks} />
+        </div>
+      )}
     </div>
   );
 }

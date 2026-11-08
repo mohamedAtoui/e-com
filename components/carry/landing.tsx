@@ -145,7 +145,7 @@ export function CarryLanding({ products }: { products: ProductRow[] }) {
           <p className="carry-eyebrow">L’ESPRIT CARRY</p>
           <h2>
             {ar ? (
-              "خذ ما تحتاجه. وانطلق."
+              "أناقة ترافقك. وأمان يطمئنك."
             ) : (
               <>
                 Emportez l’essentiel.

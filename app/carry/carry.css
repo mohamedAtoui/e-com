@@ -1671,6 +1671,17 @@
     font-size: 14px;
   }
 }
+.carry-enriched-description h2 {
+  font-family:
+    var(--font-carry-heading), var(--font-arabic), sans-serif !important;
+  font-weight: 600;
+}
+.carry-enriched-description:dir(rtl) h2 {
+  font-family: var(--font-arabic), sans-serif !important;
+}
+.carry-enriched-description {
+  overflow-wrap: anywhere;
+}
 /* Typography measured from the reference at 1280px and 390px viewports. */
 .carry-product-simple .carry-product-panel h1 {
   font-size: 40px;
