@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 
 import { useLang } from "@/components/storefront/lang-provider";
 import { productImageUrl } from "@/lib/images";
@@ -23,11 +24,14 @@ export function ProductDescription({ blocks }: { blocks: ContentBlock[] }) {
         if (b.type === "image") {
           return (
             <div key={i} className="my-7 overflow-hidden rounded-[20px] border border-foreground/10 bg-white/50">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={productImageUrl(b.src)}
                 alt={b.alt}
                 loading="lazy"
+                width={1280}
+                height={1280}
+                sizes="(max-width: 900px) calc(100vw - 36px), 860px"
+                unoptimized={b.src.startsWith("http") && !b.src.startsWith(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/`)}
                 className="block h-auto w-full object-contain"
               />
             </div>

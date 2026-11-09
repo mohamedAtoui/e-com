@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { productImageUrl } from "@/lib/images";
+import { prepareImageUpload, IMAGE_CACHE_CONTROL, IMAGE_UPLOAD_ACCEPT } from "@/lib/image-upload";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -21,24 +22,21 @@ export function ImageUploader({
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
     setUploading(true);
-    const supabase = createClient();
     const added: string[] = [];
-
-    for (const file of Array.from(files)) {
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("product-images")
-        .upload(path, file, { cacheControl: "3600", upsert: false });
-      if (error) {
-        toast.error(`Échec de l'envoi: ${file.name}`);
-      } else {
-        added.push(path);
+    try {
+      const supabase = createClient();
+      for (const file of Array.from(files)) {
+        try {
+          const optimized = await prepareImageUpload(file);
+          const ext = optimized.name.split(".").pop() ?? "webp";
+          const path = `${crypto.randomUUID()}.${ext}`;
+          const { error } = await supabase.storage.from("product-images").upload(path, optimized, { cacheControl: IMAGE_CACHE_CONTROL, upsert: false, contentType: optimized.type });
+          if (error) throw new Error(`Échec de l’envoi : ${file.name}`);
+          added.push(path);
+        } catch (error) { toast.error(error instanceof Error ? error.message : "Échec de l’envoi."); }
       }
-    }
-
-    if (added.length) onChange([...value, ...added]);
-    setUploading(false);
+      if (added.length) onChange([...value, ...added]);
+    } finally { setUploading(false); }
   }
 
   async function remove(path: string) {
@@ -110,7 +108,7 @@ export function ImageUploader({
           )}
           <input
             type="file"
-            accept="image/*"
+            accept={IMAGE_UPLOAD_ACCEPT}
             multiple
             className="sr-only"
             disabled={uploading}
@@ -121,6 +119,7 @@ export function ImageUploader({
       <p className="text-xs text-muted-foreground">
         La première image est la couverture. ⭐ pour changer.
       </p>
+      <p className="text-xs text-muted-foreground">Compression automatique avant envoi. JPG, PNG, WebP ou AVIF ; 2 Mo maximum après compression.</p>
     </div>
   );
 }

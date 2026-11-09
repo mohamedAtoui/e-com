@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { productImageUrl } from "@/lib/images";
+import { prepareImageUpload, IMAGE_CACHE_CONTROL, IMAGE_UPLOAD_ACCEPT } from "@/lib/image-upload";
 import { createClient } from "@/lib/supabase/client";
 import type { ContentBlock } from "@/types/database.types";
 
@@ -43,18 +44,16 @@ export function DescriptionBlocksEditor({
     const file = files?.[0];
     if (!file) return;
     setUploadingAt(i);
-    const supabase = createClient();
-    const ext = file.name.split(".").pop() ?? "jpg";
-    const path = `desc/${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage
-      .from("product-images")
-      .upload(path, file, { cacheControl: "3600", upsert: false });
-    setUploadingAt(null);
-    if (error) {
-      toast.error("Échec de l'envoi de l'image.");
-      return;
-    }
-    update(i, { src: path } as Partial<ContentBlock>);
+    try {
+      const optimized = await prepareImageUpload(file, "description");
+      const supabase = createClient();
+      const ext = optimized.name.split(".").pop() ?? "webp";
+      const path = `desc/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("product-images").upload(path, optimized, { cacheControl: IMAGE_CACHE_CONTROL, upsert: false, contentType: optimized.type });
+      if (error) throw new Error("Échec de l’envoi de l’image.");
+      update(i, { src: path } as Partial<ContentBlock>);
+    } catch(error) { toast.error(error instanceof Error ? error.message : "Échec de l’envoi de l’image."); }
+    finally { setUploadingAt(null); }
   }
 
   return (
@@ -101,8 +100,8 @@ export function DescriptionBlocksEditor({
               ) : (
                 <label className="flex h-28 w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed text-muted-foreground hover:border-primary hover:text-primary">
                   {uploadingAt === i ? <Loader2 className="size-5 animate-spin" /> : <ImagePlus className="size-5" />}
-                  <span className="text-xs">Choisir une image</span>
-                  <input type="file" accept="image/*" className="sr-only" disabled={uploadingAt === i} onChange={(e) => uploadImage(i, e.target.files)} />
+                  <span className="text-xs">Choisir une image — compression automatique</span>
+                  <input type="file" accept={IMAGE_UPLOAD_ACCEPT} className="sr-only" disabled={uploadingAt === i} onChange={(e) => uploadImage(i, e.target.files)} />
                 </label>
               )}
               <Input

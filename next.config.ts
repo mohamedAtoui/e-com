@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
   // A parent lockfile exists in $HOME; pin the workspace root to this project.
   turbopack: { root: __dirname },
   images: {
+    // Source objects have UUID names; keep optimized variants across visits.
+    minimumCacheTTL: 2592000,
     remotePatterns: supabaseHost
       ? [
           {
