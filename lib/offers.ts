@@ -26,7 +26,7 @@ export function normalizeOffers(raw: unknown): Offer[] {
     if (!o || typeof o !== "object") continue;
     const qty = Math.trunc(Number((o as Offer).qty));
     const price = Math.trunc(Number((o as Offer).price));
-    if (!Number.isFinite(qty) || qty < 2 || qty > 99) continue;
+    if (!Number.isFinite(qty) || qty < 1 || qty > 99) continue;
     if (!Number.isFinite(price) || price < 0) continue;
     // last write wins on duplicate qty
     byQty.set(qty, { qty, price, free_delivery: (o as Offer).free_delivery === true });

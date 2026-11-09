@@ -209,12 +209,14 @@ export function CheckoutForm({
           <div className="space-y-2">
             <Label>{p.promos}</Label>
             <div className="space-y-2.5">
-              <OfferRow
-                selected={!offer}
-                onClick={() => pickQty(1, price)}
-                title={`1 ${t.colPage.countOne}`}
-                total={formatDZD(price)}
-              />
+              {!offers.some((o) => o.qty === 1) && (
+                <OfferRow
+                  selected={!offer}
+                  onClick={() => pickQty(1, price)}
+                  title={`1 ${t.colPage.countOne}`}
+                  total={formatDZD(price)}
+                />
+              )}
               {offers.map((o) => {
                 const regular = price * o.qty;
                 const save = regular - o.price;
@@ -227,7 +229,9 @@ export function CheckoutForm({
                     title={
                       pct > 0
                         ? p.buyNGet.replace("{n}", String(o.qty)).replace("{p}", String(pct))
-                        : `${o.qty} ${p.promoUnit}`
+                        : o.qty === 1
+                          ? `1 ${t.colPage.countOne}`
+                          : `${o.qty} ${p.promoUnit}`
                     }
                     total={formatDZD(o.price)}
                     regular={save > 0 ? formatDZD(regular) : undefined}

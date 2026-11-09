@@ -201,8 +201,9 @@ export function ProductForm({ initial }: { initial?: ProductRow }) {
           <div>
             <Label>Offres / Promos</Label>
             <p className="text-xs text-muted-foreground">
-              Prix total par quantité. Ex : 2 pièces = 3500 DA, 3 pièces = 5000 DA.
+              Prix total par quantité, dès 1 pièce. Ex : 1 pièce = 2000 DA, 2 pièces = 3500 DA.
               Cochez « Livraison gratuite » pour offrir la livraison à cette quantité.
+              Pour 1 pièce sans remise, utilisez le même montant que le prix du produit.
             </p>
           </div>
           <Button type="button" variant="outline" size="sm" onClick={() => appendOffer({ qty: 2, price: 0, free_delivery: false })}>
@@ -221,7 +222,7 @@ export function ProductForm({ initial }: { initial?: ProductRow }) {
               <Input
                 id={`offers.${i}.qty`}
                 type="number"
-                min={2}
+                min={1}
                 max={99}
                 className="w-24"
                 {...register(`offers.${i}.qty` as const)}
